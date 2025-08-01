@@ -51,7 +51,7 @@ const handleAuthPress = async () => {
       } else {
         if (!otp) return alert("Enter the OTP");
 
-        const res = await verifyOtpAPI({ email, otp });
+        // const res = await verifyOtpAPI({ email, otp });
         alert("OTP Verified! Account created.");
         router.replace("/(tabs)/home");
       }
@@ -150,7 +150,7 @@ const handleAuthPress = async () => {
           //   // In real apps, check credentials here
           // router.replace('/(tabs)/home');
           // }}
-          onPress={handelAuthPress}
+          onPress={handleAuthPress}
         >
         
           <Text style={styles.primaryButtonText}>
