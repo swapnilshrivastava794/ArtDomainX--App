@@ -11,14 +11,60 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import constant from '../constant';
+import { sendRegisterOtp  } from '../service'
 
 
 const { height } = Dimensions.get('window');
 
 export default function SignScreen() {
   const router = useRouter();
+  const [email , setEmail] = useState<string>()
+  const [password , setPassword] = useState<string>()
+  const [confirmPassword ,  setConfirmPassword] = useState<string>()
+  const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState('');
+
 
   const [isSignIn, setIsSignIn] = useState(true);
+
+
+
+const handleAuthPress = async () => {
+  if (loading) return;
+
+  setLoading(true);
+
+  try {
+    if (isSignIn) {
+      // Sign In flow
+      router.replace("/(tabs)/home");
+    } else {
+      // Sign Up flow
+      if (!email) return alert("Please enter your email");
+
+      if (!otpSent) {
+        const res = await sendRegisterOtp({ email });
+        alert("OTP sent to your email");
+        setOtpSent(true); // Show OTP input
+      } else {
+        if (!otp) return alert("Enter the OTP");
+
+        const res = await verifyOtpAPI({ email, otp });
+        alert("OTP Verified! Account created.");
+        router.replace("/(tabs)/home");
+      }
+    }
+  } catch (err) {
+    console.error(err);
+    alert(otpSent ? "OTP verification failed" : "Failed to send OTP");
+  } finally {
+    setLoading(false);
+  }
+};
+
+  // const handlesignUp () 
 
   return (
     <View style={styles.container}>
@@ -65,6 +111,8 @@ export default function SignScreen() {
               style={styles.input}
               placeholder="E mail / username"
               placeholderTextColor="#888"
+              value={email}
+              onChangeText={setEmail}
             />
           </View>
 
@@ -75,6 +123,8 @@ export default function SignScreen() {
               placeholder="Password"
               secureTextEntry
               placeholderTextColor="#888"
+              value={password}
+              onChangeText={setPassword}
             />
           </View>
 
@@ -86,6 +136,8 @@ export default function SignScreen() {
                 placeholder="Confirm password"
                 secureTextEntry
                 placeholderTextColor="#888"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
               />
             </View>
           )}
@@ -94,11 +146,13 @@ export default function SignScreen() {
         {/* Submit Button */}
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => {
-            // In real apps, check credentials here
-          router.replace('/(tabs)/home');
-          }}
+          // onPress={() => {
+          //   // In real apps, check credentials here
+          // router.replace('/(tabs)/home');
+          // }}
+          onPress={handelAuthPress}
         >
+        
           <Text style={styles.primaryButtonText}>
             {isSignIn ? 'Sign In' : 'Sign Up'}
           </Text>
