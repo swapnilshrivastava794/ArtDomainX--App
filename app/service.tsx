@@ -74,6 +74,20 @@ export async function loginUser(formData: any) {
   });
 }
 
+// 📤 Send Forgot Password OTP API
+export async function sendForgotOtp(email: string) {
+  return axiosInstance.post(
+    "organization/send-forgot-otp/",
+    { email },
+    {
+      headers: {
+        "Content-Type": "application/json",
+      },
+    }
+  );
+}
+
+
 
 
 

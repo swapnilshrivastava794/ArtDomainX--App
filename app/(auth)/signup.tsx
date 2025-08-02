@@ -23,6 +23,8 @@ import { useDispatch } from 'react-redux';
 import { setAuth } from '../store/slices/authSlice';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { ActivityIndicator } from 'react-native';
+
 
 
 
@@ -79,6 +81,7 @@ export default function SignScreen() {
 
   const handleVerifyOtp = async () => {
     if (!otp.trim()) return Alert.alert('Please enter the OTP');
+    
 
     const { email, password, confirmPassword, timezone, name } = formData;
 
