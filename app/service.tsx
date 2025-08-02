@@ -17,7 +17,7 @@ axiosInstance.interceptors.request.use(async (config) => {
 
   const publicEndpoints = [
     "organization/send-register-otp/",
-    "organization/register-organization/",
+    "user/registration/",
     "auth/login/",
     "auth/signup/",
   ];
@@ -58,6 +58,24 @@ export async function sendRegisterOtp(data: { email: string }) {
     },
   });
 }
+
+// ✅ New function added
+export async function RegisterUser(data :any) {
+  return axiosInstance.post("user/registration/", data);
+}
+
+// 📁 service.ts or service.js
+
+export async function loginUser(formData: any) {
+  return axiosInstance.post("user/login/", formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+}
+
+
+
 
 
 
