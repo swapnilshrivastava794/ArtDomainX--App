@@ -50,7 +50,7 @@ export default function SignInScreen() {
           <Text style={styles.signInButtonText}>Sign In123</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.forgotPassword}>
+        <TouchableOpacity style={styles.forgotPassword} onPress={()=> router.push('/(auth)/forgotpassword')} activeOpacity={0.7}>
           <Text style={styles.forgotPasswordText}>Forgot password?</Text>
         </TouchableOpacity>
 

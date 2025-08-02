@@ -7,77 +7,89 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  RefreshControl,FlatList 
+  RefreshControl,
+  FlatList,
+  Dimensions,
+  Modal,
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+
+const { width } = Dimensions.get('window');
+const numColumns = 3;
+const gridItemMargin = 4;
+const gridItemSize = (width - (numColumns + 1) * gridItemMargin) / numColumns;
 
 const ProfileScreen = () => {
   const [activeTab, setActiveTab] = useState('Top');
   const [refreshing, setRefreshing] = useState(false);
-
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
 
   const tabs = ['Top', 'Recent', 'Short'];
-const mediaTop = [
-  { id: 1, uri: require('../../assets/top1.jpg') },
-  { id: 2, uri: require('../../assets/top2.jpg') },
-  { id: 3, uri: require('../../assets/top3.jpg') },
-  { id: 4, uri: require('../../assets/top1.jpg') },
-  { id: 5, uri: require('../../assets/top2.jpg') },
-  { id: 6, uri: require('../../assets/top3.jpg') },
-  { id: 7, uri: require('../../assets/top1.jpg') },
-  { id: 8, uri: require('../../assets/top2.jpg') },
-  { id: 9, uri: require('../../assets/top3.jpg') },
-];
-const mediaRecent = [
-  { id: 4, uri: 'https://picsum.photos/seed/recent1/300' },
-  { id: 5, uri: 'https://picsum.photos/seed/recent2/300' },
-  { id: 6, uri: 'https://picsum.photos/seed/recent3/300' },
-];
-const mediaShort = [
-  { id: 7, uri: 'https://picsum.photos/seed/short1/300' },
-  { id: 8, uri: 'https://picsum.photos/seed/short2/300' },
-  { id: 9, uri: 'https://picsum.photos/seed/short3/300' },
-];
 
+  // Using public image URLs as local assets are not supported in this environment
+  const mediaTop = [
+    { id: 1, uri: 'https://picsum.photos/seed/top1/300' },
+    { id: 2, uri: 'https://picsum.photos/seed/top2/300' },
+    { id: 3, uri: 'https://picsum.photos/seed/top3/300' },
+    { id: 4, uri: 'https://picsum.photos/seed/top4/300' },
+    { id: 5, uri: 'https://picsum.photos/seed/top5/300' },
+    { id: 6, uri: 'https://picsum.photos/seed/top6/300' },
+    { id: 7, uri: 'https://picsum.photos/seed/top7/300' },
+    { id: 8, uri: 'https://picsum.photos/seed/top8/300' },
+    { id: 9, uri: 'https://picsum.photos/seed/top9/300' },
+    { id: 10, uri: 'https://picsum.photos/seed/recent1/300' },
+  ];
+  const mediaRecent = [
+    { id: 10, uri: 'https://picsum.photos/seed/recent1/300' },
+    { id: 11, uri: 'https://picsum.photos/seed/recent2/300' },
+    { id: 12, uri: 'https://picsum.photos/seed/recent3/300' },
+  ];
+  const mediaShort = [
+    { id: 13, uri: 'https://picsum.photos/seed/short1/300' },
+    { id: 14, uri: 'https://picsum.photos/seed/short2/300' },
+    { id: 15, uri: 'https://picsum.photos/seed/short3/300' },
+  ];
 
-const getMediaByTab = () => {
-  console.log('🔁 Active Tab:', activeTab);
+  const getMediaByTab = () => {
+    switch (activeTab) {
+      case 'Recent':
+        return mediaRecent;
+      case 'Short':
+        return mediaShort;
+      default:
+        return mediaTop;
+    }
+  };
 
-  switch (activeTab) {
-    case 'Recent':
-      console.log('🟡 Returning Recent Media');
-      return mediaRecent;
-    case 'Short':
-      console.log('🟣 Returning Short Media');
-      return mediaShort;
-    default:
-      console.log('🔵 Returning Top Media');
-      return mediaTop;
-  }
-};
+  const onRefresh = () => {
+    setRefreshing(true);
+    // Simulate fetching new data
+    setTimeout(() => {
+      setRefreshing(false);
+    }, 1500);
+  };
 
-const mediaList = getMediaByTab();
-console.log('🖼️ Media List for Tab:', activeTab, mediaList);
-
-
-
-const onRefresh = () => {
-  setRefreshing(true);
-  // Simulate fetching new data
-  setTimeout(() => {
-    setRefreshing(false);
-  }, 1500);
-};
-
+  const renderGridItem = ({ item }) => (
+    <TouchableOpacity
+      style={styles.gridItemContainer}
+      onPress={() => {
+        setSelectedImage(item.uri);
+        setModalVisible(true);
+      }}
+    >
+      <Image source={{ uri: item.uri }} style={styles.gridItem} />
+    </TouchableOpacity>
+  );
 
   return (
-    <SafeAreaView style={styles.container} >
-     <ScrollView
+    <SafeAreaView style={styles.container}>
+      <ScrollView
         style={styles.content}
         refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
-        >
+      >
         {/* Cover */}
         <View style={styles.coverContainer}>
           <Image
@@ -124,6 +136,8 @@ const onRefresh = () => {
           <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=4' }} />
           <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=5' }} />
           <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=6' }} />
+          <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=7' }} />
+          <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=8' }} />
         </ScrollView>
 
         {/* Tabs */}
@@ -136,18 +150,14 @@ const onRefresh = () => {
         </View>
 
         {/* Grid */}
-        <View style={styles.grid} key={activeTab}>
-        {getMediaByTab().map((item) => (
-            <Image
-            key={item.id}
-            source={item.id ? item.uri : { uri: item.uri }}
-            style={styles.gridItem}
-            />
-        ))}
-        </View>
-
-
-
+        <FlatList
+          data={getMediaByTab()}
+          renderItem={renderGridItem}
+          keyExtractor={(item) => item.id.toString()}
+          numColumns={numColumns}
+          style={styles.gridContainer}
+          contentContainerStyle={styles.gridContent}
+        />
       </ScrollView>
 
       {/* Bottom Navigation */}
@@ -159,6 +169,26 @@ const onRefresh = () => {
           <Text style={styles.userBtnText}>User Profile</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Image Modal */}
+      <Modal
+        animationType="fade"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <View style={styles.centeredView}>
+          <Image source={{ uri: selectedImage }} style={styles.fullScreenImage} resizeMode="contain" />
+          <TouchableOpacity
+            style={styles.closeButton}
+            onPress={() => setModalVisible(!modalVisible)}
+          >
+            <Ionicons name="close-circle" size={40} color="white" />
+          </TouchableOpacity>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -233,21 +263,24 @@ const styles = StyleSheet.create({
     textDecorationLine: 'underline',
   },
 
-grid: {
-  flexDirection: 'row',
-  flexWrap: 'wrap',
-  padding: 6,
-  borderWidth: 1,
-  borderColor: 'red',
-},
-
-gridItem: {
-  width: '90%',
-  aspectRatio: 1,
-  margin: 4,         // instead of '1%' which may be too small
-  borderRadius: 10,
-  backgroundColor: '#eee', // helps to see if image doesn't load
-},
+  gridContainer: {
+    padding: gridItemMargin,
+  },
+  gridContent: {
+    justifyContent: 'space-between',
+  },
+  gridItemContainer: {
+    width: gridItemSize,
+    height: gridItemSize,
+    marginBottom: gridItemMargin,
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginLeft: gridItemMargin,
+  },
+  gridItem: {
+    width: '100%',
+    height: '100%',
+  },
 
   bottomBar: {
     flexDirection: 'row',
@@ -268,5 +301,22 @@ gridItem: {
     color: '#fff',
     fontWeight: '700',
     fontSize: 13,
+  },
+
+  // Modal styles
+  centeredView: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.9)',
+  },
+  fullScreenImage: {
+    width: '95%',
+    height: '95%',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
   },
 });
