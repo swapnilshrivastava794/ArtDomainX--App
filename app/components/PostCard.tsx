@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import CommentScreen from './CommentScreen';
+import CommentsModal from './screens/CommentScreen';
 import * as Animatable from 'react-native-animatable';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated'; // ✅ add this
