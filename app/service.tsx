@@ -95,10 +95,28 @@ export async function getAllPosts(page = 1) {
 }
 
 
+export async function getUserNotifications(params = {}){
+  try{
+     const response = await axiosInstance.get("/notification/user/notifications/" , { params });
+     return response.data;
+  }catch(error){
+    console.error("Error fetching user notifications:", error);
+    throw error;
+  }
+}
 
-
-
-
+export async function markNotificationsAsRead(notificationIds: number[]){
+    try{
+      const response = await axiosInstance.post("/notification/notifications/mark-read/",{
+         ids: notificationIds,
+      });
+     return response.data
+    }catch(error){
+      console.error("error in marking notifications as read", error);
+      throw error;
+    }
+}
+  
 
 
 export default axiosInstance;
