@@ -1,3 +1,5 @@
+// SignScreen.tsx (fixed version)
+
 import React, { useState } from 'react';
 import {
   View,
@@ -15,16 +17,35 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { sendRegisterOtp } from '../service';
+import { sendRegisterOtp, RegisterUser, loginUser } from '../service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch } from 'react-redux';
+import { setAuth } from '../store/slices/authSlice';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
+import { ActivityIndicator } from 'react-native';
+
+
+
 
 export default function SignScreen() {
+  const dispatch = useDispatch();
   const router = useRouter();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [otp, setOtp] = useState('');
+  const [otpSent, setOtpSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isSignIn, setIsSignIn] = useState(true);
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    name: '',
+    otp: '',
+    user_type: 'user',
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+  });
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   const handleAuthPress = async () => {
     if (loading) return;
@@ -34,84 +55,200 @@ export default function SignScreen() {
       if (isSignIn) {
         router.replace('/(tabs)/home');
       } else {
-        if (!email || !password || !confirmPassword)
-          return Alert.alert('Please fill all fields');
+        const { email, password, confirmPassword } = formData;
 
-        if (password !== confirmPassword)
-          return Alert.alert('Passwords do not match');
+        if (!email || !password || !confirmPassword) {
+          Alert.alert('Error', 'Please fill all fields');
+          return;
+        }
+        if (password !== confirmPassword) {
+          Alert.alert('Error', 'Passwords do not match');
+          return;
+        }
 
         const res = await sendRegisterOtp({ email });
-        console.log("OTP sent response:", res);
+        console.log('OTP sent response:', res);
         Alert.alert('Success', 'OTP sent to your email');
-        router.replace({ pathname: '/(auth)/otpscreen', params: { email } });
+        setOtpSent(true);
       }
     } catch (err: any) {
-      console.log("Signup Error:", err);
-      Alert.alert('Error', err?.message || 'Failed to send OTP');
+      const message = Array.isArray(err?.message) ? err.message.join(',') : err?.message || 'Failed to send OTP';
+      Alert.alert('Error', message);
     } finally {
       setLoading(false);
     }
   };
 
+  const handleVerifyOtp = async () => {
+    if (!otp.trim()) return Alert.alert('Please enter the OTP');
+    
+
+    const { email, password, confirmPassword, timezone, name } = formData;
+
+    if (!email.trim() || !password.trim() || !confirmPassword.trim() || !timezone.trim() || !name.trim()) {
+      Alert.alert('Please fill all fields');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      Alert.alert('Passwords do not match');
+      return;
+    }
+
+    const updatedFormData = {
+      email,
+      password,
+      name,          // comes from the user input
+      otp,
+      user_type: 'user',
+      timezone,
+    };
+    console.log("📦 Payload to be sent:", JSON.stringify(updatedFormData, null, 2));
+
+
+    try {
+      const res = await RegisterUser(updatedFormData);
+      console.log('✅ Registered Response:', res?.data);
+
+      const {
+        access,
+        refresh,
+        profile_id,
+        profile_type
+      } = res.data.data || {};
+
+      if (!access || !refresh) {
+        console.error("❌ Missing tokens in response", res.data);
+        Alert.alert('Error', 'Something went wrong, tokens missing.');
+        return;
+      }
+
+      await AsyncStorage.setItem('accessToken', access);
+      await AsyncStorage.setItem('refreshToken', refresh);
+
+      dispatch(setAuth({ access, refresh, profile_id, profile_type }));
+
+      Alert.alert('Success', 'Registration complete!');
+      router.replace('/(tabs)/home');
+    } catch (error: any) {
+      console.log('❌ Registration Error:', error);
+      const message = error?.data?.detail || 'Registration Failed';
+      Alert.alert('Error', message);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (!formData.email) {
+      Alert.alert('Missing Email', 'Enter email before resending OTP.');
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await sendRegisterOtp({ email: formData.email });
+      console.log('🔁 Resent OTP response:', res);
+      Alert.alert('Success', 'OTP resent to your email');
+    } catch (err: any) {
+      const message = Array.isArray(err?.message) ? err.message.join(', ') : err?.message || 'Failed to resend OTP';
+      Alert.alert('Error', message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleLogin = async () => {
+    const { email, password } = formData;
+
+    if (!email || !password) {
+      Alert.alert("Missing Fields", "Please enter both email and password");
+      return;
+    }
+
+    const loginData = new FormData();
+    loginData.append('email', email);
+    loginData.append('password', password);
+
+    try {
+      const res = await loginUser(loginData);
+      console.log("✅ Login Success:", res.data);
+
+      const { access, refresh, profile_id, profile_type } = res.data.data;
+
+      await AsyncStorage.setItem("accessToken", access);
+      await AsyncStorage.setItem("refreshToken", refresh);
+
+      dispatch(setAuth({ access, refresh, profile_id, profile_type }));
+      router.replace('/(tabs)/home');
+    } catch (err: any) {
+      console.log("❌ Login Error:", err?.response?.data || err);
+      Alert.alert("Login Failed", err?.response?.data?.detail || "Invalid credentials");
+    }
+  };
+
+
+
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      // Yaha 'keyboardVerticalOffset' ki value kam kar di hai
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 20 : -100}
+    <KeyboardAwareScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
+      enableOnAndroid={true}
+      keyboardShouldPersistTaps="handled"
     >
       <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={{ flexGrow: 1 }}
-          keyboardShouldPersistTaps="handled"
-        >
-          <View style={styles.container}>
-            {/* Top - Logo */}
+        <ScrollView contentContainerStyle={{ flexGrow: 1 }} keyboardShouldPersistTaps="handled">
+          <View style={styles.container} >
             <View style={styles.topSection}>
-              <Image
-                source={require('../../assets/images/artdomain-logo.png')}
-                style={styles.logo}
-              />
+              <Image source={require('../../assets/images/artdomain-logo.png')} style={styles.logo} />
             </View>
 
-            {/* Bottom Card */}
             <View style={styles.bottomSection}>
-              {/* Tabs */}
               <View style={styles.tabContainer}>
                 <TouchableOpacity
                   style={[styles.tabButton, isSignIn && styles.activeTab]}
-                  onPress={() => setIsSignIn(true)}
+                  onPress={() => {
+                    setIsSignIn(true);
+                    setOtpSent(false);
+                  }}
                 >
-                  <Text style={[styles.tabText, isSignIn && styles.activeTabText]}>
-                    Sign In
-                  </Text>
+                  <Text style={[styles.tabText, isSignIn && styles.activeTabText]}>Sign In</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.tabButton, !isSignIn && styles.activeTab]}
-                  onPress={() => setIsSignIn(false)}
+                  onPress={() => {
+                    setIsSignIn(false);
+                    setOtpSent(false);
+                  }}
                 >
-                  <Text style={[styles.tabText, !isSignIn && styles.activeTabText]}>
-                    Sign Up
-                  </Text>
+                  <Text style={[styles.tabText, !isSignIn && styles.activeTabText]}>Sign Up</Text>
                 </TouchableOpacity>
               </View>
 
-              {/* Instructions */}
               <Text style={styles.instructionText}>
                 {isSignIn ? 'Please sign in to continue' : 'Please sign up to continue'}
               </Text>
 
-              {/* Inputs */}
               <View style={styles.inputWrapper}>
+                {!isSignIn && (
+                  <View style={styles.inputRow}>
+                    <Ionicons name="person" size={20} color="#333" style={styles.inputIcon} />
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Full Name"
+                      placeholderTextColor="#888"
+                      value={formData.name}
+                      onChangeText={(text) => setFormData((prev) => ({ ...prev, name: text }))}
+                    />
+                  </View>
+                )}
+
                 <View style={styles.inputRow}>
                   <Ionicons name="mail" size={20} color="#333" style={styles.inputIcon} />
                   <TextInput
                     style={styles.input}
-                    placeholder="E mail"
+                    placeholder="Email"
                     placeholderTextColor="#888"
                     autoCapitalize="none"
-                    value={email}
-                    onChangeText={setEmail}
+                    value={formData.email}
+                    onChangeText={(text) => setFormData({ ...formData, email: text })}
                   />
                 </View>
 
@@ -122,8 +259,8 @@ export default function SignScreen() {
                     placeholder="Password"
                     secureTextEntry
                     placeholderTextColor="#888"
-                    value={password}
-                    onChangeText={setPassword}
+                    value={formData.password}
+                    onChangeText={(text) => setFormData({ ...formData, password: text })}
                   />
                 </View>
 
@@ -135,24 +272,58 @@ export default function SignScreen() {
                       placeholder="Confirm Password"
                       secureTextEntry
                       placeholderTextColor="#888"
-                      value={confirmPassword}
-                      onChangeText={setConfirmPassword}
+                      value={formData.confirmPassword}
+                      onChangeText={(text) => setFormData({ ...formData, confirmPassword: text })}
                     />
                   </View>
                 )}
-              </View>
 
-              {/* Submit Button */}
+                {!isSignIn && otpSent && (
+                  <View style={{ marginBottom: 16 }}>
+                    <View style={styles.inputRow}>
+                      <Ionicons name="keypad" size={20} color="#333" style={styles.inputIcon} />
+                      <TextInput
+                        style={styles.input}
+                        placeholder="Enter OTP"
+                        keyboardType="number-pad"
+                        value={otp}
+                        onChangeText={setOtp}
+                      />
+                    </View>
+                  </View>
+                )}
+
+                {otpSent && (
+                  <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp} disabled={loading}>
+                    <Text style={[styles.resendText, loading && { opacity: 0.6 }]}>
+                      {loading ? 'Sending...' : 'Resend OTP'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
               <TouchableOpacity
                 style={styles.primaryButton}
-                onPress={handleAuthPress}
+                onPress={
+                  loading
+                    ? () => { } // Disable interaction while loading
+                    : otpSent
+                      ? handleVerifyOtp
+                      : isSignIn
+                        ? handleLogin       // 👉 Call login on Sign In
+                        : handleAuthPress   // 👉 Call signup (send OTP) on Sign Up
+                }
               >
                 <Text style={styles.primaryButtonText}>
-                  {loading ? 'Please wait...' : isSignIn ? 'Sign In' : 'Sign Up'}
+                  {loading
+                    ? 'Please wait...'
+                    : otpSent
+                      ? 'Verify OTP'
+                      : isSignIn
+                        ? 'Sign In'
+                        : 'Sign Up'}
                 </Text>
               </TouchableOpacity>
 
-              {/* Forgot Password */}
               {isSignIn && (
                 <TouchableOpacity onPress={() => router.push('/(auth)/forgotpassword')} activeOpacity={0.7}>
                   <Text style={styles.forgotPassword}>Forgot password?</Text>
@@ -162,7 +333,7 @@ export default function SignScreen() {
           </View>
         </ScrollView>
       </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+    </KeyboardAwareScrollView>
   );
 }
 
@@ -172,7 +343,8 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingBottom: verticalScale(10),
+    // paddingBottom: verticalScale(20),
+
   },
   logo: {
     width: scale(230),
@@ -185,7 +357,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: scale(30),
     paddingHorizontal: moderateScale(24),
     paddingTop: verticalScale(30),
-    paddingBottom: verticalScale(20),
+    paddingBottom: verticalScale(55),
     elevation: scale(10),
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
@@ -261,4 +433,14 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(10),
     fontSize: scale(13),
   },
+
+  resendButton: {
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  resendText: {
+    color: '#007BFF',
+    fontWeight: '600',
+  },
+
 });

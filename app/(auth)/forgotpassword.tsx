@@ -14,21 +14,39 @@ import {
   // SafeAreaView ko import kiya gaya hai
   SafeAreaView,
 } from 'react-native';
+import { sendForgotOtp } from '../service';
 import { useRouter } from 'expo-router';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
+import { ActivityIndicator } from 'react-native';
+
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
   const [email, setEmail] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleReset = () => {
+
+  const handleReset = async () => {
     if (!email.trim()) {
       return Alert.alert('Error', 'Please enter your email address');
     }
+    setLoading(true);
 
-    // TODO: Call reset password API
-    Alert.alert('Success', `Reset link sent to ${email}`);
+    try {
+      const response = await sendForgotOtp(email);
+      Alert.alert('Success', `Reset OTP sent to ${email}`);
+      console.log("OTP Response:", response.data);
+
+      // Navigate to OTP verification screen, optionally passing email
+      // router.push(`/otp-verification?email=${email}`);
+    } catch (error: any) {
+      console.log("Error sending forgot OTP:", error);
+      Alert.alert('Failed', error?.detail || 'Something went wrong');
+    } finally {
+    setLoading(false);  // ✅ This is what was missing
+  }
   };
+
 
   return (
     // KeyboardAvoidingView ko SafeAreaView ke andar wrap kiya gaya hai
@@ -42,7 +60,7 @@ export default function ForgotPasswordScreen() {
             <View>
               {/* Logo */}
               <Image
-                source={require('../../assets/images/artdomain-logo.png')} 
+                source={require('../../assets/images/artdomain-logo.png')}
                 style={styles.logo}
               />
 
@@ -74,8 +92,12 @@ export default function ForgotPasswordScreen() {
               />
 
               {/* Submit Button */}
-              <TouchableOpacity style={styles.button} onPress={handleReset} activeOpacity={0.8}>
-                <Text style={styles.buttonText}>Send Reset Link</Text>
+              <TouchableOpacity style={styles.button} onPress={handleReset} activeOpacity={0.8} disabled={loading}>
+                {loading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Send Reset Link</Text>
+                )}
               </TouchableOpacity>
 
               {/* Back to Login */}
