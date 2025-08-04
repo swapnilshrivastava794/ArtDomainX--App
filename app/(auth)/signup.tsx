@@ -167,7 +167,7 @@ export default function SignScreen() {
     const loginData = new FormData();
     loginData.append('email', email);
     loginData.append('password', password);
-
+      setLoading(true); // ✅ Start loader
     try {
       const res = await loginUser(loginData);
       console.log("✅ Login Success:", res.data);
@@ -178,7 +178,10 @@ export default function SignScreen() {
       await AsyncStorage.setItem("refreshToken", refresh);
 
       dispatch(setAuth({ access, refresh, profile_id, profile_type }));
+      setTimeout(() => {
+      setLoading(false);
       router.replace('/(tabs)/home');
+    }, 300); // 300–500ms is enough for smoother UX
     } catch (err: any) {
       console.log("❌ Login Error:", err?.response?.data || err);
       Alert.alert("Login Failed", err?.response?.data?.detail || "Invalid credentials");
@@ -314,13 +317,13 @@ export default function SignScreen() {
                 }
               >
                 <Text style={styles.primaryButtonText}>
-                  {loading
-                    ? 'Please wait...'
-                    : otpSent
-                      ? 'Verify OTP'
-                      : isSignIn
-                        ? 'Sign In'
-                        : 'Sign Up'}
+                  {loading ? (
+                <ActivityIndicator color="#111" size="small" />
+              ) : (
+                <Text style={styles.primaryButtonText}>
+                  {otpSent ? 'Verify OTP' : isSignIn ? 'Sign In' : 'Sign Up'}
+                </Text>
+              )}
                 </Text>
               </TouchableOpacity>
 
@@ -416,16 +419,16 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     width: '100%',
-    backgroundColor: '#eee',
+    backgroundColor: '#0033ff',
     paddingVertical: verticalScale(12),
-    borderRadius: scale(24),
+    borderRadius: scale(10),
     alignItems: 'center',
     marginBottom: verticalScale(10),
   },
   primaryButtonText: {
-    fontSize: scale(16),
+    fontSize: scale(14),
     fontWeight: '600',
-    color: '#111',
+    color: '#fff',
   },
   forgotPassword: {
     color: 'crimson',

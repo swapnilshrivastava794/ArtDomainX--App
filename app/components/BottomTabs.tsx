@@ -30,16 +30,16 @@ export default function BottomTabs() {
       }}
     >
       <TouchableOpacity onPress={() => router.push('/home')}>
-        <Ionicons name="home" size={24} color={isActive('/home') ? 'purple' : 'gray'} />
+        <Ionicons name="home" size={24} color={isActive('/home') ? 'blue' : 'gray'} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.push('/notifications')}>
-        <Ionicons name="notifications" size={24} color={isActive('/notifications') ? 'purple' : 'gray'} />
+        <Ionicons name="notifications" size={24} color={isActive('/notifications') ? 'blue' : 'gray'} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push('/home')}>
-        <MaterialIcons name="message" size={24} color={isActive('/home') ? 'purple' : 'gray'} />
+      <TouchableOpacity onPress={() => router.push('/explore')}>
+        <MaterialIcons name="message" size={24} color={isActive('/explore') ? 'blue' : 'gray'} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.push('/profile')}>
-        <Ionicons name="person" size={24} color={isActive('/profile') ? 'purple' : 'gray'} />
+        <Ionicons name="person" size={24} color={isActive('/profile') ? 'blue' : 'gray'} />
       </TouchableOpacity>
     </View>
   );
