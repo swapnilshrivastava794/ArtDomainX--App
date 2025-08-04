@@ -1,181 +1,198 @@
 import React, { useState } from 'react';
 import {
+  Modal,
   View,
-  Text,
-  TextInput,
   FlatList,
-  StyleSheet,
+  Text,
+  Image,
+  TextInput,
   TouchableOpacity,
-  TouchableWithoutFeedback,
-  Keyboard,
+  StyleSheet,
+  KeyboardAvoidingView,
   Platform,
-  KeyboardAvoidingView 
+  SafeAreaView,
 } from 'react-native';
-import Modal from 'react-native-modal'; // ✅ use this instead of RN Modal
 
-const CommentScreen = ({
-  visible,
-  onClose,
-  comments,
-  onAddComment,
-}) => {
+const mockComments = Array.from({ length: 50 }, (_, i) => ({
+  id: i.toString(),
+  user: `user_${i}`,
+  avatar: 'https://i.pravatar.cc/150?img=' + (i + 10),
+  text: `This is comment ${i + 1}`,
+  time: `${i + 1}h`,
+  likes: Math.floor(Math.random() * 10),
+}));
+
+const CommentsModal = ({ visible, onClose }) => {
+  const [comments, setComments] = useState(mockComments);
   const [newComment, setNewComment] = useState('');
 
-  const handleSend = () => {
+  const handleAddComment = () => {
     if (newComment.trim()) {
-      onAddComment(newComment.trim());
+      const newEntry = {
+        id: Date.now().toString(),
+        user: 'you',
+        avatar: 'https://i.pravatar.cc/150?img=1',
+        text: newComment,
+        time: 'Just now',
+        likes: 0,
+      };
+      setComments([...comments, newEntry]);
       setNewComment('');
     }
   };
 
+  const renderItem = ({ item }) => (
+    <View style={styles.commentRow}>
+      <Image source={{ uri: item.avatar }} style={styles.avatar} />
+      <View style={styles.commentContent}>
+        <Text>
+          <Text style={styles.username}>{item.user} </Text>
+          <Text>{item.text}</Text>
+        </Text>
+        <View style={styles.commentMeta}>
+          <Text style={styles.metaText}>{item.time} • Reply</Text>
+          {item.likes > 0 && (
+            <Text style={[styles.metaText, { marginLeft: 10 }]}>
+              ❤️ {item.likes}
+            </Text>
+          )}
+        </View>
+      </View>
+      <TouchableOpacity>
+        <Text style={styles.heartIcon}>♡</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
-    <Modal
-      isVisible={visible}
-      onBackdropPress={onClose}
-      onSwipeComplete={onClose}
-      swipeDirection="down"
-      style={styles.modal}
-      propagateSwipe={true}
-    >
-      <KeyboardAvoidingView >
-        <View style={styles.modalContent}>
-          <View style={styles.swipeBar} />
+    <Modal visible={visible} animationType="slide">
+      <SafeAreaView style={styles.container}>
+        <KeyboardAvoidingView
+          style={styles.flex}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        >
+          {/* Close Button */}
           <View style={styles.header}>
-            <Text style={styles.title}>Comments</Text>
+            <Text style={styles.headerTitle}>Comments</Text>
             <TouchableOpacity onPress={onClose}>
-              <Text style={styles.close}>Close</Text>
+              <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
           </View>
 
           <FlatList
             data={comments}
-            keyExtractor={(_, index) => index.toString()}
-            renderItem={({ item }) => {
-              const isSelf = item.user === 'you'; // Replace 'you' with dynamic username if available
-
-              return (
-                <View
-                  style={[
-                    styles.commentBubble,
-                    isSelf ? styles.selfComment : styles.otherComment,
-                  ]}
-                >
-                  {!isSelf && <Text style={styles.user}>{item.user}</Text>}
-                  <Text style={styles.commentText}>{item.text}</Text>
-                </View>
-              );
-            }}
-
-            style={{ flex: 1 }}
+            keyExtractor={(item) => item.id}
+            renderItem={renderItem}
+            contentContainerStyle={styles.commentList}
+            showsVerticalScrollIndicator={false}
           />
 
-          <View style={styles.inputContainer}>
+          <View style={styles.inputRow}>
+            <Image
+              source={{ uri: 'https://i.pravatar.cc/150?img=2' }}
+              style={styles.avatarSmall}
+            />
             <TextInput
-              style={styles.input}
-              placeholder="Add a comment..."
               value={newComment}
               onChangeText={setNewComment}
+              placeholder="Add a comment..."
+              style={styles.input}
+              placeholderTextColor="#999"
             />
-            <TouchableOpacity onPress={handleSend}>
-              <Text style={styles.send}>Send</Text>
+            <TouchableOpacity onPress={handleAddComment}>
+              <Text style={styles.postButton}>Post</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </KeyboardAvoidingView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </Modal>
   );
 };
 
-export default CommentScreen;
-
 const styles = StyleSheet.create({
-  modal: {
-    justifyContent: 'flex-end',
-    margin: 0,
-  },
-modalContent: {
-  backgroundColor: '#fff',
-  paddingHorizontal: 16,
-  paddingBottom: Platform.OS === 'ios' ? 30 : 12,
-  paddingTop: 12,
-  borderTopLeftRadius: 20,
-  borderTopRightRadius: 20,
-  maxHeight: '80%',   // ✅ instead of fixed height
-  flexGrow: 1,
-},
-
-  swipeBar: {
-    width: 40,
-    height: 5,
-    borderRadius: 3,
-    backgroundColor: '#ccc',
-    alignSelf: 'center',
-    marginBottom: 8,
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  flex: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: 'bold',
-  },
-  close: {
-    color: '#007bff',
-  },
-  commentBox: {
-    marginBottom: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#ddd',
-    paddingBottom: 6,
-  },
-  user: {
-    fontWeight: 'bold',
-    marginBottom: 2,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    borderTopWidth: 1,
-    borderTopColor: '#ccc',
+    paddingHorizontal: 16,
     paddingVertical: 12,
+    borderBottomWidth: 0.5,
+    borderBottomColor: '#ccc',
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  closeButton: {
+    fontSize: 22,
+    color: '#000',
+  },
+  commentList: {
+    padding: 12,
+    paddingBottom: 90,
+  },
+  commentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  avatar: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    marginRight: 12,
+  },
+  commentContent: {
+    flex: 1,
+  },
+  username: {
+    fontWeight: '600',
+    color: '#222',
+  },
+  commentMeta: {
+    flexDirection: 'row',
+    marginTop: 4,
+  },
+  metaText: {
+    fontSize: 12,
+    color: '#666',
+  },
+heartIcon: {
+  fontSize: 22, // ⬅️ increased from 16 to 22 (or go even higher if needed)
+  color: '#444',
+  paddingLeft: 8,
+  paddingTop: 4,
+},
+
+  inputRow: {
+    flexDirection: 'row',
     alignItems: 'center',
+    borderTopWidth: 0.5,
+    borderTopColor: '#ccc',
+    padding: 12,
+    backgroundColor: '#fff',
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+  },
+  avatarSmall: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 8,
   },
   input: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    marginRight: 8,
+    fontSize: 15,
+    color: '#000',
   },
-  send: {
-    color: '#007bff',
-    fontWeight: 'bold',
+  postButton: {
+    color: '#007AFF',
+    marginLeft: 10,
+    fontWeight: '600',
   },
-  commentBubble: {
-  maxWidth: '75%',
-  borderRadius: 12,
-  padding: 10,
-  marginVertical: 6,
-},
-
-selfComment: {
-  backgroundColor: '#dcf8c6',
-  alignSelf: 'flex-end',
-  borderTopRightRadius: 0,
-},
-
-otherComment: {
-  backgroundColor: '#f0f0f0',
-  alignSelf: 'flex-start',
-  borderTopLeftRadius: 0,
-},
-
-commentText: {
-  fontSize: 15,
-},
-
 });
+
+export default CommentsModal;
