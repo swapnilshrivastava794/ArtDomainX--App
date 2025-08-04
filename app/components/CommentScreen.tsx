@@ -54,7 +54,7 @@ const CommentScreen = ({
             data={comments}
             keyExtractor={(_, index) => index.toString()}
             renderItem={({ item }) => {
-              const isSelf = item.user === 'you';
+              const isSelf = item.user === 'You';
 
               return (
                 <View
@@ -69,9 +69,9 @@ const CommentScreen = ({
               );
             }}
             style={styles.commentsList}
-            showsVerticalScrollIndicator={false}
-            bounces={false}
-            scrollEnabled={false}
+            showsVerticalScrollIndicator={true}
+            bounces={true}
+            scrollEnabled={true}
           />
 
           <View style={styles.inputContainer}>
