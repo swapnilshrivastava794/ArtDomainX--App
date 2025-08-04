@@ -14,6 +14,7 @@ const axiosInstance = axios.create({
 // Attach token only to protected endpoints
 axiosInstance.interceptors.request.use(async (config) => {
   const token = await AsyncStorage.getItem("accessToken");
+  console.log("🔐 Access Token from AsyncStorage:", token); // 🧪 DEBUG LOG
 
   const publicEndpoints = [
     "organization/send-register-otp/",
@@ -85,6 +86,12 @@ export async function sendForgotOtp(email: string) {
       },
     }
   );
+}
+
+
+// 📥 Get All Posts (Paginated)
+export async function getAllPosts(page = 1) {
+  return axiosInstance.get(`media/all-posts/?page=${page}`);
 }
 
 

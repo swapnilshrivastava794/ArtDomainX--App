@@ -40,7 +40,7 @@ export default function WelcomeScreen() {
           </TouchableOpacity>
 
           {/* Google */}
-          <TouchableOpacity style={styles.socialButton}>
+          {/* <TouchableOpacity style={styles.socialButton}>
             <View style={styles.btnContent}>
               <Image
                 source={require('../../assets/images/google.jpg')}
@@ -48,10 +48,10 @@ export default function WelcomeScreen() {
               />
               <Text style={styles.socialButtonText}>Continue with Google</Text>
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Facebook */}
-          <TouchableOpacity style={styles.socialButton}>
+          {/* <TouchableOpacity style={styles.socialButton}>
             <View style={styles.btnContent}>
               <Image
                 source={require('../../assets/images/facebook.jpg')}
@@ -59,10 +59,10 @@ export default function WelcomeScreen() {
               />
               <Text style={styles.socialButtonText}>Continue with Facebook</Text>
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Apple */}
-          <TouchableOpacity style={styles.socialButton}>
+          {/* <TouchableOpacity style={styles.socialButton}>
             <View style={styles.btnContent}>
               <Image
                 source={require('../../assets/images/apple.jpg')}
@@ -70,7 +70,7 @@ export default function WelcomeScreen() {
               />
               <Text style={styles.socialButtonText}>Continue with Apple</Text>
             </View>
-          </TouchableOpacity>
+          </TouchableOpacity> */}
 
           {/* Log In */}
           <TouchableOpacity
@@ -87,12 +87,13 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
+    
   },
   topSection: {
     flex: 1,
     justifyContent: 'flex-end',
     alignItems: 'center',
-    paddingBottom: 10,
+    paddingBottom: 100,
   },
   logoImage: {
     width: 250,

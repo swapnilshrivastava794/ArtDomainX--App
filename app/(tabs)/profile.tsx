@@ -26,6 +26,8 @@ const ProfileScreen = () => {
   const [selectedImage, setSelectedImage] = useState(null);
 
   const tabs = ['Top', 'Recent', 'Short'];
+    const profileImage = 'https://i.pravatar.cc/100?img=1';
+
 
   // Using public image URLs as local assets are not supported in this environment
   const mediaTop = [
@@ -106,15 +108,22 @@ const ProfileScreen = () => {
 
         {/* Profile Info */}
         <View style={styles.profileContainer}>
+        <View style={styles.avatarWrapper}>
           <Image
             source={{ uri: 'https://i.pravatar.cc/100?img=1' }}
             style={styles.avatar}
           />
-          <TouchableOpacity style={styles.followBtn}>
-            <Text style={styles.followText}>Follow</Text>
-            <MaterialCommunityIcons name="chevron-down" size={16} color="#fff" />
+          <TouchableOpacity style={styles.editPhotoBtn} onPress={() => console.log('Edit photo')}>
+            <MaterialCommunityIcons name="plus-circle" size={24} color="#007bff" />
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity style={styles.followBtn}>
+          <Text style={styles.followText}>Follow</Text>
+          <MaterialCommunityIcons name="chevron-down" size={16} color="#fff" />
+        </TouchableOpacity>
+      </View>
+
 
         <View style={styles.bioContainer}>
           <Text style={styles.name}>Selena Gomez</Text>
@@ -319,4 +328,17 @@ const styles = StyleSheet.create({
     top: 50,
     right: 20,
   },
+  avatarWrapper: {
+  position: 'relative',
+},
+
+editPhotoBtn: {
+  position: 'absolute',
+  bottom: 0,
+  right: 0,
+  backgroundColor: '#fff',
+  borderRadius: 50,
+  padding: 2,
+},
+
 });
