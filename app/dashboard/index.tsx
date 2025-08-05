@@ -1,6 +1,6 @@
 import React from 'react';
 import { ScrollView, View, StyleSheet } from 'react-native';
-import Header from '../components/Header';
+ import Header from '../components/Header';
 import PostBox from '../components/PostBox';
 import PostCard from '../components/PostCard';
 import EventCard from '../components/EventCard';

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -7,86 +7,114 @@ import {
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
-  StatusBar,
-  Platform,
+  ActivityIndicator,
   FlatList,
+  RefreshControl, // Import RefreshControl
 } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { useRouter } from 'expo-router';
+import { getUserNotifications, markNotificationsAsRead } from '../service';
 
-
-const FILTERS = ['All', 'Like', 'Comment', 'Follow','Friend Request', 'Friend Accept', 'Tag', 'Mention','Share', 'Post Created', 'Event Media', 'Event Reminder', 'Status Change', 'Event Create', ' Event RSVP'];
-
-const NOTIFICATIONS = [
-  {
-    id: 1,
-    username: 'John',
-    message: "Only 2 RSVPs for your event 'Bhaijan' — boost it now to attract more guests!",
-    time: '8/2/2025, 12:00:00 PM',
-    type: 'RSVP',
-    userImage: require('../../assets/top1.jpg'),
-  },
-  {
-    id: 2,
-    username: 'sherlen',
-    message: "Only 1 RSVPs for your event 'bhaijan 2' — boost it now to attract more guests!",
-    time: '8/2/2025, 12:00:00 PM',
-    type: 'RSVP',
-    userImage: require('../../assets/top1.jpg'),
-  },
-  {
-    id: 3,
-    username: 'raj',
-    message: 'liked your post.',
-    time: '8/2/2025, 11:00:00 AM',
-    type: 'Like',
-    userImage: require('../../assets/top1.jpg'),
-  },
-  {
-    id: 4,
-    username: 'Sam',
-    message: 'started following you.',
-    time: '8/1/2025, 6:00:00 PM',
-    type: 'Follow',
-    userImage: require('../../assets/top1.jpg'),
-  },
-  {
-    id: 5,
-    username: 'Louisa',
-    message: 'commented on your photo.',
-    time: '8/1/2025, 3:00:00 PM',
-    type: 'Comment',
-    userImage: require('../../assets/top1.jpg'),
-  },
+const FILTERS = [
+  'all',
+  'like',
+  'comment',
+  'follow',
+  'friend_request',
+  'friend_accept',
+  'tag',
+  'mention',
+  'share',
+  'post_create',
+  'event_media',
+  'event_reminder',
+  'status change',
+  'event create',
+  'event rsvp',
+  'mentor eligibility',
 ];
 
 const NotificationItem = ({ item }) => (
-
   <View style={styles.notificationCard}>
-    <Image source={item.userImage} style={styles.avatar} />
+    <Image
+      source={
+        item.sender_profile_picture
+          ? { uri: `https://backend.artdomainx.com${item.sender_profile_picture}` }
+          : require('../../assets/images/profile.png') 
+      }
+      style={styles.avatar}
+    />
     <View style={{ flex: 1 }}>
-      <Text style={styles.username}>{item.username}</Text>
+      <Text style={styles.username}>{item.sender_username || 'User'}</Text>
       <Text style={styles.message}>{item.message}</Text>
-      <Text style={styles.time}>{item.time}</Text>
+      <Text style={styles.time}>{new Date(item.created_at).toLocaleString()}</Text>
     </View>
   </View>
 );
 
 const Notifications = () => {
   const router = useRouter();
-  const [selectedFilter, setSelectedFilter] = useState('All');
+  const [selectedFilter, setSelectedFilter] = useState('all');
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); 
+
+
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const response = await getUserNotifications();
+      const apiNotifications = response?.data?.notifications || [];
+      setNotifications(apiNotifications);
+
+      if (apiNotifications.length > 0) {
+        const ids = apiNotifications.map((n) => n.id);
+        await markNotificationsAsRead(ids);
+      }
+    } catch (error) {
+      console.error('Error loading notifications', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false); 
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [fetchNotifications]);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    fetchNotifications(); 
+  }, [fetchNotifications]);
 
   const filteredNotifications =
-    selectedFilter === 'All'
-      ? NOTIFICATIONS
-      : NOTIFICATIONS.filter((n) => n.type === selectedFilter);
+    selectedFilter === 'all'
+      ? notifications
+      : notifications.filter((n) => n.notification_type?.toLowerCase() === selectedFilter.toLowerCase());
+
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea1}>
+        <ActivityIndicator
+          size="large"
+          color="#1877F2"
+         // style={{ marginTop: verticalScale(100), alignItems: "center", justifyContent: "center" }}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.push('/(tabs)/home')}>
-        <Feather name="arrow-left-circle" size={24} color="black" style={styles.icon} />
+          <Feather
+            name="arrow-left-circle"
+            size={24}
+            color="black"
+            style={styles.icon}
+          />
         </TouchableOpacity>
         <Text style={styles.title}>Notifications</Text>
       </View>
@@ -111,25 +139,39 @@ const Notifications = () => {
                 selectedFilter === filter && styles.activeFilterText,
               ]}
             >
-              {filter}
+              {filter
+                .replace(/_/g, ' ')
+                .split(' ')
+                .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+                .join(' ')}
             </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>
 
-      <FlatList
-        data={filteredNotifications}
-        renderItem={({ item }) => <NotificationItem item={item} />}
-        keyExtractor={(item) => item.id.toString()}
-        contentContainerStyle={styles.flatListContent}
-        ListEmptyComponent={() => (
-          <View style={styles.noNotificationsContainer}>
-            <Text style={styles.noNotificationsText}>
-              No notifications found for "{selectedFilter}".
-            </Text>
-          </View>
-        )}
-      />
+      <View style={styles.fixedHeightListContainer}>
+        <FlatList
+          data={filteredNotifications}
+          renderItem={({ item }) => <NotificationItem item={item} />}
+          keyExtractor={(item) => item.id.toString()}
+          contentContainerStyle={styles.flatListContent}
+          ListEmptyComponent={() => (
+            <View style={styles.noNotificationsContainer}>
+              <Text style={styles.noNotificationsText}>
+                No notifications found for "{selectedFilter}".
+              </Text>
+            </View>
+          )}
+          // Add these props for pull-to-refresh
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              tintColor="#1877F2" // Optional: customize the spinner color
+            />
+          }
+        />
+      </View>
     </SafeAreaView>
   );
 };
@@ -138,13 +180,18 @@ const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    // paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+  },
+  safeArea1:{
+     flex: 1,
+    backgroundColor: '#FFFFFF',
+    justifyContent: "center",
+    alignItems: "center",
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: "100%",
-    height: "10%",
+    width: '100%',
+    height: '10%',
     paddingVertical: verticalScale(10),
     paddingHorizontal: scale(16),
     backgroundColor: '#F5F5F5',
@@ -159,11 +206,11 @@ const styles = StyleSheet.create({
     fontSize: moderateScale(16),
     fontWeight: '600',
     color: '#222',
-    alignItems: "center",
-    justifyContent: "center",
-    marginLeft: "30%",
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: '30%',
     marginTop: verticalScale(20),
-   fontStyle: 'italic',
+    fontStyle: 'italic',
   },
   filterRow: {
     paddingVertical: verticalScale(10),
@@ -196,10 +243,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
   },
-  flatListContent: {
-    flexGrow: 1, 
-    paddingHorizontal: scale(12),
+  fixedHeightListContainer: {
     height: scale(600),
+  },
+  flatListContent: {
+    flexGrow: 1,
+    paddingHorizontal: scale(12),
     paddingTop: verticalScale(10),
     paddingBottom: verticalScale(20),
   },
@@ -223,24 +272,25 @@ const styles = StyleSheet.create({
     width: scale(40),
     height: scale(40),
     borderRadius: scale(20),
+    backgroundColor: '#ccc',
   },
   username: {
     fontSize: scale(13),
     fontWeight: '600',
     color: '#000',
-    fontStyle: "italic",
+    fontStyle: 'italic',
   },
   message: {
     fontSize: scale(12),
     color: '#333',
     marginTop: verticalScale(2),
-     fontStyle: 'italic',
+    fontStyle: 'italic',
   },
   time: {
     fontSize: scale(10),
     color: '#888',
     marginTop: verticalScale(4),
-    fontStyle: "italic",
+    fontStyle: 'italic',
   },
   noNotificationsContainer: {
     flex: 1,
