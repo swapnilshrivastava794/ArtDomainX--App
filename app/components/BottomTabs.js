@@ -9,7 +9,7 @@ export default function BottomTabs() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
 
-  const isActive = (path: string) => pathname === path;
+  const isActive = (path) => pathname === path;
 
   return (
     <View

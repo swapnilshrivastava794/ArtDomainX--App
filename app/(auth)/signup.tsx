@@ -177,6 +177,8 @@ export default function SignScreen() {
       await AsyncStorage.setItem("accessToken", access);
       await AsyncStorage.setItem("refreshToken", refresh);
 
+     
+      dispatch({ type: 'RESET_ALL' }); // 🧹 Clear previous Redux state
       dispatch(setAuth({ access, refresh, profile_id, profile_type }));
       setTimeout(() => {
       setLoading(false);
