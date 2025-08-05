@@ -8,6 +8,10 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import CommentsModal from './screens/CommentScreen';
+import * as Animatable from 'react-native-animatable';
+import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { runOnJS } from 'react-native-reanimated'; // ✅ add this
 
 const PostCard = () => {
   return (
@@ -74,6 +78,14 @@ const PostCard = () => {
           <Text style={styles.footerText}>200 Comments</Text>
         </View>
       </View>
+
+      {/* Modal for full comments */}
+      <CommentScreen
+        visible={showComments}
+        onClose={() => setShowComments(false)}
+        onAddComment={handleAddComment}
+        comments={comments}
+      />
     </View>
   );
 };
