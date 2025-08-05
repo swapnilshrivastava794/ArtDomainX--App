@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,86 +11,144 @@ import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import CommentsModal from './screens/CommentScreen';
 import * as Animatable from 'react-native-animatable';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
-import { runOnJS } from 'react-native-reanimated'; // ✅ add this
+import { runOnJS } from 'react-native-reanimated';
 
-const PostCard = () => {
+interface PostType {
+  id: number;
+  imageUrl: string;
+  user: { name: string; avatar: string };
+  caption: string;
+  comments: { user: string; text: string }[];
+  reactionCount: number;
+  commentCount: number;
+  shareCount: number;
+  viewCount: number;
+  
+}
+
+interface PostCardProps {
+  post: PostType;
+  onAddComment: (postId: number, commentText: string) => void;
+}
+
+const PostCard: React.FC<PostCardProps> = ({ post, onAddComment ,  }) => {
+  const [showComments, setShowComments] = useState(false);
+  const [liked, setLiked] = useState(false);
+  const heartRef = useRef<Animatable.View | null>(null);
+
+  const handleLike = () => {
+    setLiked(prev => !prev);
+    heartRef.current?.bounceIn();
+  };
+
+  const doubleTap = Gesture.Tap()
+    .numberOfTaps(2)
+    .onStart(() => {
+      runOnJS(handleLike)();
+    });
+
+  const handleAddComment = (text: string) => {
+    onAddComment(post.id, text);
+  };
+
   return (
-    <View style={styles.card}>
-      {/* Image with overlays */}
-      <View style={styles.imageWrapper}>
-        <Image
-          source={{ uri: 'https://lipsum.app/random/640x480/' }}
-          style={styles.image}
-        />
+    <GestureDetector gesture={doubleTap}>
+      <View style={styles.card}>
+        {/* Image */}
+        <View style={styles.imageWrapper}>
+          <Image source={{ uri: post.imageUrl }} style={styles.image} />
 
-        {/* Profile Info Badge */}
-        <View style={styles.profileBadge}>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/100' }}
-            style={styles.avatar}
-          />
-          <View style={{ flex: 1 }}>
-            <Text style={styles.nameText}>
-              Dee Williams <Text style={styles.verified}>✔️</Text>
+          {/* User Info */}
+          <View style={styles.profileBadge}>
+            <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.nameText}>
+                {post.user.name} <Text style={styles.verified}>✔️</Text>
+              </Text>
+              <Text style={styles.subText}>Yesterday at 3am</Text>
+            </View>
+            <MaterialCommunityIcons name="dots-vertical" size={20} color="#fff" />
+          </View>
+
+          {/* Reaction Buttons */}
+          <View style={styles.reactionColumn}>
+            <TouchableOpacity style={styles.reactionBtn} onPress={handleLike}>
+              <Animatable.View ref={heartRef}>
+                <Ionicons
+                  name={liked ? 'heart' : 'heart-outline'}
+                  size={22}
+                  color={liked ? '#fa0202ff' : '#fff'}
+                />
+              </Animatable.View>
+              <Text style={styles.reactionText}>{post.reactionCount}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.reactionBtn} onPress={() => setShowComments(true)}>
+              <Ionicons name="chatbubble" size={20} color="#fff" />
+              <Text style={styles.reactionText}>{post.commentCount}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.reactionBtn}>
+              <Ionicons name="send" size={20} color="#fff" />
+              <Text style={styles.reactionText}>{post.shareCount}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity style={styles.reactionBtn} disabled>
+              <Ionicons name="eye" size={20} color="#fff" />
+              <Text style={styles.reactionText}>{post.viewCount}</Text>
+          </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Caption and Comments */}
+        <View style={styles.captionContainer}>
+          <Text style={styles.caption}>{post.caption}</Text>
+
+          {post.comments.slice(0, 2).map((comment, index) => (
+            <Text key={index} style={styles.commentText}>
+              <Text style={styles.commentUser}>{comment.user}: </Text>
+              {comment.text}
             </Text>
-            <Text style={styles.subText}>Yesterday at 3am</Text>
+          ))}
+
+          {post.comments.length > 2 && (
+            <TouchableOpacity onPress={() => setShowComments(true)}>
+              <Text style={styles.viewAllText}>View all {post.comments.length} comments</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Footer */}
+          <View style={styles.footer}>
+            <View style={styles.reactionAvatars}>
+              <Image
+                source={{ uri: 'https://i.pravatar.cc/50?img=5' }}
+                style={styles.miniAvatar}
+              />
+              <Image
+                source={{ uri: 'https://i.pravatar.cc/50?img=7' }}
+                style={styles.miniAvatar}
+              />
+              <Text style={styles.footerText}>+67 Other</Text>
+            </View>
+            <Text style={styles.footerText}>{post.comments.length} Comments</Text>
           </View>
-          <MaterialCommunityIcons name="dots-vertical" size={20} color="#fff" />
         </View>
 
-        {/* Reaction Icons on Right */}
-        <View style={styles.reactionColumn}>
-          <TouchableOpacity style={styles.reactionBtn}>
-            <Ionicons name="heart" size={22} color="#ff2dc2" />
-            <Text style={styles.reactionText}>1.3k</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.reactionBtn}>
-            <Ionicons name="chatbubble" size={20} color="#fff" />
-            <Text style={styles.reactionText}>200</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.reactionBtn}>
-            <Ionicons name="send" size={20} color="#fff" />
-            <Text style={styles.reactionText}>50</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.reactionBtn}>
-            <Ionicons name="ellipsis-horizontal" size={20} color="#fff" />
-          </TouchableOpacity>
-        </View>
+        <CommentsModal
+          visible={showComments}
+          onClose={() => setShowComments(false)}
+          onAddComment={handleAddComment}
+          comments={post.comments}
+        />
       </View>
-
-      {/* Caption and Footer */}
-      <View style={styles.captionContainer}>
-        <Text style={styles.caption}>
-          💙 Poise, grace, and a little sparkle – the essentials
-        </Text>
-        <View style={styles.footer}>
-          <View style={styles.reactionAvatars}>
-            <Image
-              source={{ uri: 'https://i.pravatar.cc/50?img=5' }}
-              style={styles.miniAvatar}
-            />
-            <Image
-              source={{ uri: 'https://i.pravatar.cc/50?img=7' }}
-              style={styles.miniAvatar}
-            />
-            <Text style={styles.footerText}>+67 Other</Text>
-          </View>
-          <Text style={styles.footerText}>200 Comments</Text>
-        </View>
-      </View>
-
-      {/* Modal for full comments */}
-      <CommentScreen
-        visible={showComments}
-        onClose={() => setShowComments(false)}
-        onAddComment={handleAddComment}
-        comments={comments}
-      />
-    </View>
+    </GestureDetector>
   );
 };
 
 export default PostCard;
+
+// styles remain unchanged
+
 
 const styles = StyleSheet.create({
   card: {
@@ -169,6 +227,19 @@ const styles = StyleSheet.create({
   caption: {
     fontSize: 14,
     color: '#222',
+    marginBottom: 8,
+  },
+  commentText: {
+    fontSize: 13,
+    color: '#333',
+    marginBottom: 4,
+  },
+  commentUser: {
+    fontWeight: 'bold',
+  },
+  viewAllText: {
+    fontSize: 13,
+    color: '#888',
     marginBottom: 8,
   },
   footer: {
