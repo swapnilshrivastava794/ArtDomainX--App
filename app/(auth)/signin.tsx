@@ -46,7 +46,7 @@ export default function SignInScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
+        <TouchableOpacity style={styles.signInButton} onPress={handleSignIn} activeOpacity={0.6}>
           <Text style={styles.signInButtonText}>Sign In123</Text>
         </TouchableOpacity>
 
@@ -61,13 +61,13 @@ export default function SignInScreen() {
         </View>
 
         <View style={styles.socialButtons}>
-          <TouchableOpacity style={styles.socialButton}>
+          <TouchableOpacity style={styles.socialButton} activeOpacity={0.6}>
             <Text style={styles.socialIcon}>G</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
+          <TouchableOpacity style={styles.socialButton} activeOpacity={0.6}>
             <Text style={styles.socialIcon}>f</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.socialButton}>
+          <TouchableOpacity style={styles.socialButton} activeOpacity={0.6}>
             <Text style={styles.socialIcon}>🐦</Text>
           </TouchableOpacity>
         </View>
@@ -76,7 +76,7 @@ export default function SignInScreen() {
       <TouchableOpacity 
         style={styles.switchButton}
         onPress={() => router.push('/(auth)/signup')}
-      >
+      activeOpacity={0.6}>
         <Text style={styles.switchButtonText}>Don't have an account? Sign up</Text>
       </TouchableOpacity>
     </View>

@@ -17,7 +17,7 @@ const AdCard = () => {
     <View style={styles.card}>
       <View style={styles.headerRow}>
         <Text style={styles.title}>Sponsored</Text>
-        <TouchableOpacity onPress={() => setVisible(false)}>
+        <TouchableOpacity onPress={() => setVisible(false)} activeOpacity={0.6}>
           <Ionicons name="close" size={18} color="#999" />
         </TouchableOpacity>
       </View>

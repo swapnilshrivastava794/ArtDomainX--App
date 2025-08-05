@@ -52,7 +52,7 @@ const PostBox = () => {
       )}
 
       <View style={styles.actionsRow}>
-        <TouchableOpacity style={styles.iconBtn} onPress={handleMediaPick}>
+        <TouchableOpacity style={styles.iconBtn} onPress={handleMediaPick} activeOpacity={0.6}>
           <Ionicons name="image" size={20} color="#4f46e5" />
           <Text style={styles.iconText}>Media</Text>
         </TouchableOpacity>
@@ -61,7 +61,7 @@ const PostBox = () => {
           style={[styles.postBtn, !(post || media) && { opacity: 0.4 }]}
           onPress={handlePost}
           disabled={!(post || media)}
-        >
+        activeOpacity={0.6}>
           <Text style={styles.postText}>Post</Text>
         </TouchableOpacity>
       </View>

@@ -32,13 +32,13 @@ const Header = () => {
       <View style={styles.container}>
         {/* Left: Menu, Search, Add */}
         <View style={styles.leftSection}>
-          <TouchableOpacity style={styles.iconBtn}>
+          <TouchableOpacity style={styles.iconBtn} activeOpacity={0.6}>
             <Entypo name="menu" size={22} color="#444" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn}>
+          <TouchableOpacity style={styles.iconBtn} activeOpacity={0.6}>
             <Feather name="search" size={22} color="#444" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={handleMediaPick}>
+          <TouchableOpacity style={styles.iconBtn} onPress={handleMediaPick} activeOpacity={0.6}>
             <Ionicons name="add-circle-outline" size={24} color="#444" />
           </TouchableOpacity>
         </View>

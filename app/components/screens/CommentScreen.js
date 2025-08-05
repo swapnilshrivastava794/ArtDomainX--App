@@ -58,7 +58,7 @@ const CommentsModal = ({ visible, onClose }) => {
           )}
         </View>
       </View>
-      <TouchableOpacity>
+      <TouchableOpacity activeOpacity={0.5}>
         <Text style={styles.heartIcon}>♡</Text>
       </TouchableOpacity>
     </View>
@@ -74,7 +74,7 @@ const CommentsModal = ({ visible, onClose }) => {
           {/* Close Button */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>Comments</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} activeOpacity={0.6}>
               <Text style={styles.closeButton}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -99,7 +99,7 @@ const CommentsModal = ({ visible, onClose }) => {
               style={styles.input}
               placeholderTextColor="#999"
             />
-            <TouchableOpacity onPress={handleAddComment}>
+            <TouchableOpacity onPress={handleAddComment} activeOpacity={0.6}>
               <Text style={styles.postButton}>Post</Text>
             </TouchableOpacity>
           </View>

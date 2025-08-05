@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   FlatList,
-  RefreshControl, // Import RefreshControl
+  RefreshControl, 
 } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
@@ -21,18 +21,17 @@ const FILTERS = [
   'like',
   'comment',
   'follow',
-  'friend_request',
-  'friend_accept',
+  'friend request',
+  'friend accept',
   'tag',
   'mention',
   'share',
-  'post_create',
-  'event_media',
-  'event_reminder',
+  'post create',
+  'event media',
+  'event reminder',
   'status change',
   'event create',
-  'event rsvp',
-  'mentor eligibility',
+  'event response',
 ];
 
 const NotificationItem = ({ item }) => (
@@ -162,12 +161,12 @@ const Notifications = () => {
               </Text>
             </View>
           )}
-          // Add these props for pull-to-refresh
+         
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#1877F2" // Optional: customize the spinner color
+              tintColor="#1877F2" 
             />
           }
         />

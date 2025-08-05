@@ -13,6 +13,9 @@ import {
   Modal,
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+// Assuming EditProfile is a component in a local file, so we'll keep the import.
+// import EditProfile from '../components/EditProfile';
+import { router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const numColumns = 3;
@@ -26,8 +29,7 @@ const ProfileScreen = () => {
   const [selectedImage, setSelectedImage] = useState(null);
 
   const tabs = ['Top', 'Recent', 'Short'];
-    const profileImage = 'https://i.pravatar.cc/100?img=1';
-
+  const profileImage = 'https://i.pravatar.cc/100?img=1';
 
   // Using public image URLs as local assets are not supported in this environment
   const mediaTop = [
@@ -79,7 +81,7 @@ const ProfileScreen = () => {
         setSelectedImage(item.uri);
         setModalVisible(true);
       }}
-    >
+    activeOpacity={0.6}>
       <Image source={{ uri: item.uri }} style={styles.gridItem} />
     </TouchableOpacity>
   );
@@ -98,32 +100,36 @@ const ProfileScreen = () => {
             source={{ uri: 'https://backend.artdomainx.com/media/profiles/canvas_picture/Screenshot_2025-04-19_164918.png' }}
             style={styles.coverImage}
           />
-          <TouchableOpacity style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color="white" />
+          <TouchableOpacity style={styles.backBtn} activeOpacity={0.6}>
+            <Ionicons name="arrow-back" size={24} color="white"/>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuBtn}>
+          <TouchableOpacity style={styles.menuBtn} activeOpacity={0.6}>
             <Ionicons name="menu" size={24} color="white" />
           </TouchableOpacity>
         </View>
 
-        {/* Profile Info */}
+        {/* Profile Info and Buttons */}
         <View style={styles.profileContainer}>
-        <View style={styles.avatarWrapper}>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/100?img=1' }}
-            style={styles.avatar}
-          />
-          <TouchableOpacity style={styles.editPhotoBtn} onPress={() => console.log('Edit photo')}>
-            <MaterialCommunityIcons name="plus-circle" size={24} color="#007bff" />
-          </TouchableOpacity>
+          <View style={styles.avatarWrapper}>
+            <Image
+              source={{ uri: 'https://i.pravatar.cc/100?img=1' }}
+              style={styles.avatar}
+            />
+            <TouchableOpacity style={styles.editPhotoBtn} onPress={() => console.log('Edit photo')} activeOpacity={0.6}>
+              <MaterialCommunityIcons name="plus-circle" size={24} color="#007bff" />
+            </TouchableOpacity>
+          </View>
+          {/* Moved the Follow and Edit Profile buttons here for better visual grouping */}
+          <View style={styles.buttonRow}>
+            <TouchableOpacity style={styles.followBtn} activeOpacity={0.6}>
+              <Text style={styles.followText}>Follow</Text>
+              <MaterialCommunityIcons name="chevron-down" size={16} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.editProfileBtn} onPress={() => router.push('/components/EditProfile')} activeOpacity={0.6}>
+              <Text style={styles.editProfileText}>Edit Profile</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-
-        <TouchableOpacity style={styles.followBtn}>
-          <Text style={styles.followText}>Follow</Text>
-          <MaterialCommunityIcons name="chevron-down" size={16} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
 
         <View style={styles.bioContainer}>
           <Text style={styles.name}>Selena Gomez</Text>
@@ -148,11 +154,12 @@ const ProfileScreen = () => {
           <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=7' }} />
           <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=8' }} />
         </ScrollView>
+        {/* The old location of the button is now removed */}
 
         {/* Tabs */}
         <View style={styles.tabs}>
           {tabs.map((tab) => (
-            <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={styles.tabItem}>
+            <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={styles.tabItem} activeOpacity={0.6}>
               <Text style={[styles.tabText, activeTab === tab && styles.activeTab]}>{tab}</Text>
             </TouchableOpacity>
           ))}
@@ -171,10 +178,10 @@ const ProfileScreen = () => {
 
       {/* Bottom Navigation */}
       <View style={styles.bottomBar}>
-        <TouchableOpacity><Ionicons name="home" size={24} color="#4b5563" /></TouchableOpacity>
-        <TouchableOpacity><Ionicons name="search" size={24} color="#4b5563" /></TouchableOpacity>
-        <TouchableOpacity><Ionicons name="notifications" size={24} color="#4b5563" /></TouchableOpacity>
-        <TouchableOpacity style={styles.userBtn}>
+        <TouchableOpacity activeOpacity={0.6}><Ionicons name="home" size={24} color="#4b5563" /></TouchableOpacity>
+        <TouchableOpacity activeOpacity={0.6}><Ionicons name="search" size={24} color="#4b5563" /></TouchableOpacity>
+        <TouchableOpacity activeOpacity={0.6}><Ionicons name="notifications" size={24} color="#4b5563" /></TouchableOpacity>
+        <TouchableOpacity style={styles.userBtn} activeOpacity={0.6}>
           <Text style={styles.userBtnText}>User Profile</Text>
         </TouchableOpacity>
       </View>
@@ -193,7 +200,7 @@ const ProfileScreen = () => {
           <TouchableOpacity
             style={styles.closeButton}
             onPress={() => setModalVisible(!modalVisible)}
-          >
+          activeOpacity={0.6}>
             <Ionicons name="close-circle" size={40} color="white" />
           </TouchableOpacity>
         </View>
@@ -217,10 +224,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   avatar: { width: 72, height: 72, borderRadius: 36, borderWidth: 3, borderColor: '#fff' },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 20, // Add some top margin to separate it from the avatar
+  },
   followBtn: {
-    marginLeft: 'auto',
     backgroundColor: '#4f46e5',
     paddingVertical: 8,
     paddingHorizontal: 16,
@@ -229,6 +241,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   followText: { color: '#fff', fontWeight: '600', marginRight: 4 },
+  editProfileBtn: {
+    backgroundColor: '#e5e7eb',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    marginLeft: 10, // Add some space between the two buttons
+  },
+  editProfileText: {
+    color: '#374151',
+    fontWeight: '600',
+  },
 
   bioContainer: { paddingHorizontal: 16, marginTop: 12 },
   name: { fontSize: 18, fontWeight: '700', color: '#111' },
@@ -329,16 +352,15 @@ const styles = StyleSheet.create({
     right: 20,
   },
   avatarWrapper: {
-  position: 'relative',
-},
-
-editPhotoBtn: {
-  position: 'absolute',
-  bottom: 0,
-  right: 0,
-  backgroundColor: '#fff',
-  borderRadius: 50,
-  padding: 2,
-},
-
+    position: 'relative',
+    marginRight: 16,
+  },
+  editPhotoBtn: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderRadius: 50,
+    padding: 2,
+  },
 });
