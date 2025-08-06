@@ -40,7 +40,7 @@ const NotificationItem = ({ item }) => (
       source={
         item.sender_profile_picture
           ? { uri: `https://backend.artdomainx.com${item.sender_profile_picture}` }
-          : require('../../assets/images/profile.png') 
+          : require('../../assets/images/profileicon.png') 
       }
       style={styles.avatar}
     />
@@ -209,7 +209,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: '30%',
     marginTop: verticalScale(20),
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   filterRow: {
     paddingVertical: verticalScale(10),
@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: scale(12),
     color: '#333',
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   activeFilterText: {
     color: '#fff',
@@ -277,19 +277,19 @@ const styles = StyleSheet.create({
     fontSize: scale(13),
     fontWeight: '600',
     color: '#000',
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   message: {
     fontSize: scale(12),
     color: '#333',
     marginTop: verticalScale(2),
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   time: {
     fontSize: scale(10),
     color: '#888',
     marginTop: verticalScale(4),
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   noNotificationsContainer: {
     flex: 1,

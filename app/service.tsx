@@ -116,7 +116,58 @@ export async function markNotificationsAsRead(notificationIds: number[]){
       throw error;
     }
 }
+
+export async function searchUser(name: string) {
+  return axiosInstance.get("profile/profiles/search/", {
+    params: { name },
+  });
+}
+
+
+// GET API FOR HASHTAG SEARCH {{url}}/media/hashtags-list/?search=query
+export async function searchHashtag(query: string) {
+  return axiosInstance.get("media/hashtags-list/", {
+    params: { search: query },
+  });
+}
+
+
+// export async function searchUserByUsername(username) {
+//   return axiosInstance.get("profile/profiles/search/", {
+//     params: { name: username },
+//   });
+// }
   
+export async function fetchHashtags(searchQuery: string) {
+  return axiosInstance.get("media/hashtags-list/", {
+    params: { search: searchQuery },
+  });
+}
+export async function uploadPost(formData: any) {
+  return axiosInstance.post("media/post/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+}
+
+export async function fetchHashtag(searchQuery: string) {
+  return axiosInstance.get("media/hashtags-list/", {
+    params: { search: searchQuery },
+  });
+}
+
+export async function fetchDraftPost() {
+  return axiosInstance.get("media/posts/my-drafts/");
+}
+
+export async function describeArt(imageFile) {
+  const formData = new FormData();
+  formData.append("image", imageFile);
+
+  return axiosInstance.post("ai/art/describe/", formData); 
+}
+
 
 
 export default axiosInstance;

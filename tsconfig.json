@@ -12,5 +12,5 @@
     ".expo/types/**/*.ts",
     "expo-env.d.ts",
     "nativewind-env.d.ts"
-, "app/components/screens/CommentScreen.js", "app/components/screens/Feed.js", "app/components/PostCard.tsx"  ]
+, "app/components/screens/CommentScreen.js", "app/components/screens/Feed.js", "app/components/PostCard.tsx", "app/service.tsxx"  ]
 }
