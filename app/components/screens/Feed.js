@@ -22,7 +22,7 @@ const [loading, setLoading] = useState(false);
     fetchPosts();
   }, []);
 
-  const BASE_URL = "https://backend.artdomainx.com/media/"; // ya jo bhi tumhara sahi URL hai
+  const BASE_URL = "https://backend.artdomainx.com/media/"; 
 
   
 
@@ -106,7 +106,7 @@ const fetchPosts = async () => {
   renderItem={({ item }) => (
     <PostCard post={item} onAddComment={handleAddComment} />
   )}
-  onEndReached={() => fetchPosts(page)} // 👈 Load more on scroll end
+  onEndReached={() => fetchPosts(page)} 
   onEndReachedThreshold={0.4}
   ListFooterComponent={loading ? <ActivityIndicator size="large" color="blue" /> : null}
 />

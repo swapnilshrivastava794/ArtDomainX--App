@@ -11,12 +11,12 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 const PostComposer = () => {
   const [visibility, setVisibility] = useState('Public');
   const [isDropdownVisible, setIsDropdownVisible] = useState(false);
 
-  // Updated visibilityOptions to be an array of objects for better control over rendering
   const visibilityOptions = [
     { icon: '🌍', text: 'Public' },
     { icon: '🔒', text: 'Private' },
@@ -168,89 +168,89 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: '#fff',
     marginTop: Platform.OS === 'ios' ? 50 : 20,
-    marginHorizontal: 16,
-    padding: 20,
-    top: 70,
-    borderRadius: 12,
+    marginHorizontal: moderateScale(16),
+    padding: scale(20),
+    top: scale(70),
+    borderRadius: scale(12),
     elevation: 5,
   },
   title: {
-    fontSize: 18,
+    fontSize: scale(16),
     fontWeight: '700',
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
     alignSelf: 'center',
   },
   draftLink: {
     color: '#3b82f6',
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
   },
   profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: verticalScale(10),
   },
   userInfo: {
-    marginLeft: 10,
+    marginLeft: moderateScale(10),
   },
   username: {
     fontWeight: '700',
-    fontSize: 14,
+    fontSize: scale(14),
   },
   visibility: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#f3f4f6',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginTop: 4,
+    paddingHorizontal: moderateScale(10),
+    paddingVertical: verticalScale(4),
+    borderRadius: scale(20),
+    marginTop: verticalScale(4),
   },
   visibilityDot: {
-    width: 8,
-    height: 8,
+    width: scale(8),
+    height: scale(8),
     backgroundColor: 'green',
-    borderRadius: 4,
-    marginRight: 6,
+    borderRadius: scale(4),
+    marginRight: moderateScale(6),
   },
   visibilityText: {
-    marginRight: 4,
-    fontSize: 12,
+    marginRight: scale(4),
+    fontSize: scale(12),
   },
   inputBox: {
     borderWidth: 1,
     borderColor: '#e5e7eb',
-    borderRadius: 10,
-    minHeight: 100,
-    padding: 10,
-    marginTop: 10,
+    borderRadius: scale(10),
+    minHeight: scale(90),
+    padding: scale(10),
+    marginTop: verticalScale(10),
     textAlignVertical: 'top',
-    fontSize: 14,
+    fontSize: scale(12),
   },
   previewImage: {
     width: '100%',
-    height: 180,
-    borderRadius: 10,
-    marginTop: 10,
+    height: scale(180),
+    borderRadius: scale(10),
+    marginTop: verticalScale(10),
   },
   addMediaRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: verticalScale(10),
   },
   addMediaText: {
-    marginLeft: 8,
+    marginLeft: scale(6),
     color: 'green',
     fontWeight: '600',
   },
   buttonRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 20,
+    marginTop: verticalScale(20),
   },
   postBtn: {
     backgroundColor: '#2563eb',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
+    paddingVertical: verticalScale(10),
+    paddingHorizontal: moderateScale(30),
     borderRadius: 8,
   },
   postText: {
@@ -259,8 +259,8 @@ const styles = StyleSheet.create({
   },
   draftBtn: {
     backgroundColor: '#e5e7eb',
-    paddingVertical: 10,
-    paddingHorizontal: 30,
+    paddingVertical: verticalScale(10),
+    paddingHorizontal: moderateScale(30),
     borderRadius: 8,
   },
   draftText: {
@@ -274,22 +274,22 @@ const styles = StyleSheet.create({
   dropdown: {
     backgroundColor: '#fff',
     borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 5,
+    paddingVertical: verticalScale(8),
+    paddingHorizontal: moderateScale(5),
     elevation: 5,
     position: 'absolute',
   },
   dropdownItem: {
     flexDirection: 'row', 
     alignItems: 'center', 
-    paddingVertical: 10,
+    paddingVertical: verticalScale(8),
   },
   dropdownIcon: {
-    fontSize: 16, 
-    marginRight: 8, 
+    fontSize: scale(16), 
+    marginRight: moderateScale(8), 
   },
   dropdownText: {
-    fontSize: 14,
+    fontSize: scale(13),
     color: '#111827',
   },
 });

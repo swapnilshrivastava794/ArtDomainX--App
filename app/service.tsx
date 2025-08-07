@@ -143,13 +143,6 @@ export async function fetchHashtags(searchQuery: string) {
     params: { search: searchQuery },
   });
 }
-export async function uploadPost(formData: any) {
-  return axiosInstance.post("media/post/", formData, {
-    headers: {
-      "Content-Type": "multipart/form-data",
-    },
-  });
-}
 
 export async function fetchHashtag(searchQuery: string) {
   return axiosInstance.get("media/hashtags-list/", {
@@ -168,6 +161,41 @@ export async function describeArt(imageFile) {
   return axiosInstance.post("ai/art/describe/", formData); 
 }
 
+export async function fetchAllPosts() {
+  return axiosInstance.get("media/all-posts/");
+}
 
+export async function fetchTrendingPosts() {
+  return axiosInstance.get("media/posts/trending/");
+}
 
+export async function fetchPostsByPage(page) {
+  return axiosInstance.get(`media/all-posts/?page=${page}`);
+}
+
+export async function increasePostViewCount(postId) {
+  return axiosInstance.post(`media/post-view/${postId}/`);
+}
+
+export async function reactToPost(postId, reactionType) {
+  return axiosInstance.post(`media/reactions/${postId}/`, {
+    reaction_type: reactionType,
+  });
+}
+
+export async function postShareCount(postId) {
+  return axiosInstance.post(`media/share/posts/${postId}/`);
+}
+
+export async function fetchSinglePost(postId) {
+  return axiosInstance.get(`media/post/${postId}/`);
+}
+
+export async function uploadPost(formData) {
+  return axiosInstance.post("media/post/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+}
 export default axiosInstance;
