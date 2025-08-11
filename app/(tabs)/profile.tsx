@@ -13,6 +13,7 @@ import {
   Modal,
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 
 const { width } = Dimensions.get('window');
 const numColumns = 3;
@@ -122,6 +123,12 @@ const ProfileScreen = () => {
           <Text style={styles.followText}>Follow</Text>
           <MaterialCommunityIcons name="chevron-down" size={16} color="#fff" />
         </TouchableOpacity>
+
+        
+        <TouchableOpacity style={styles.editBtn} onPress={() => router.push('/components/EditProfile')}>
+          <Text style={styles.followText}>Edit Profile</Text>
+          <MaterialCommunityIcons name="chevron-down" size={16} color="#fff" />
+        </TouchableOpacity>
       </View>
 
 
@@ -229,7 +236,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   followText: { color: '#fff', fontWeight: '600', marginRight: 4 },
-
+  editBtn: {
+    marginLeft: 'auto',
+    backgroundColor: 'grey',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
   bioContainer: { paddingHorizontal: 16, marginTop: 12 },
   name: { fontSize: 18, fontWeight: '700', color: '#111' },
   username: { color: '#6b7280', marginTop: 2 },

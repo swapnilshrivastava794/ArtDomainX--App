@@ -19,7 +19,7 @@ import constant from '../../constant';
 const CommentsModal = ({ visible, onClose, postId }) => {
   const [comments, setComments] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
-const [totalPages, setTotalPages] = useState(1); // from API
+const [totalPages, setTotalPages] = useState(1); 
 const [loadingMore, setLoadingMore] = useState(false);
 
   const [inputText, setInputText] = useState('');
