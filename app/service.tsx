@@ -99,6 +99,9 @@ export const getPostById = (id :any) => {
 export const getPostComments = (id :any) => {
   return axiosInstance.get(`media/posts-comments/${id}/`);
 };
+export const profileDetail = (id :any) => {
+  return axiosInstance.get(`/profile/profile/${id}/`);
+};
 
 export async function addPostComment(postId: number | string, content: string) {
   return axiosInstance.post(
@@ -151,6 +154,72 @@ export async function markNotificationsAsRead(notificationIds: number[]){
       console.error("error in marking notifications as read", error);
       throw error;
     }
+}
+
+// Profile APIs
+export async function getCurrentUserProfile() {
+  try {
+    const response = await axiosInstance.get("/user/profile/");
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching current user profile:", error);
+    throw error;
+  }
+}
+
+export async function getUserProfile(userId: string | number) {
+  try {
+    const response = await axiosInstance.get(`/user/profile/${userId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    throw error;
+  }
+}
+
+export async function updateUserProfile(profileData: FormData) {
+  try {
+    const response = await axiosInstance.put("/user/profile/", profileData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Error updating user profile:", error);
+    throw error;
+  }
+}
+
+export async function getUserPosts(userId: string | number, page = 1) {
+  try {
+    const endpoint = `/media/profile-posts/profile-id/${userId}/?page=${page}`;
+    const response = await axiosInstance.get(endpoint);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching user posts:", error);
+    throw error;
+  }
+}
+
+export async function followUser(userId: string | number) {
+  try {
+    const response = await axiosInstance.post(`/user/follow/${userId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error following user:", error);
+    throw error;
+  }
+}
+
+export async function unfollowUser(userId: string | number) {
+  try {
+    const response = await axiosInstance.delete(`/user/follow/${userId}/`);
+    return response.data;
+  } catch (error) {
+    console.error("Error unfollowing user:", error);
+    throw error;
+  }
 }
   
 

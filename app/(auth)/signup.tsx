@@ -21,6 +21,7 @@ import { sendRegisterOtp, RegisterUser, loginUser } from '../service';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
 import { setAuth } from '../store/slices/authSlice';
+import { fetchProfile } from '../store/slices/profileSlice';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { ActivityIndicator } from 'react-native';
@@ -180,6 +181,10 @@ export default function SignScreen() {
      
       dispatch({ type: 'RESET_ALL' }); // 🧹 Clear previous Redux state
       dispatch(setAuth({ access, refresh, profile_id, profile_type }));
+
+      
+        await dispatch(fetchProfile(profile_id)).unwrap();
+
       setTimeout(() => {
       setLoading(false);
       router.replace('/(tabs)/home');

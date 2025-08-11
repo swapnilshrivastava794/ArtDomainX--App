@@ -1,16 +1,56 @@
 import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useDispatch } from 'react-redux';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { loginUser } from '../service';
+import { setAuth } from '../store/slices/authSlice';
 
 export default function SignInScreen() {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const dispatch = useDispatch();
 
-  const handleSignIn = () => {
-      router.replace('/(tabs)/home'); // ✅ MUST be (tabs)/home, NOT just /home
+  const handleSignIn = async () => {
+    try {
+      if (!username || !password) {
+        Alert.alert('Required', 'Please enter username/email and password.');
+        return;
+      }
+      setLoading(true);
+
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('password', password);
+
+      const res = await loginUser(formData);
+      const data = res?.data || res; // defend in case interceptor returns data directly
+
+      const access = data?.access;
+      const refresh = data?.refresh;
+      const profile_id = data?.profile_id;
+      const profile_type = data?.profile_type;
+
+      if (!access) {
+        throw new Error('Login did not return an access token.');
+      }
+
+      await AsyncStorage.setItem('accessToken', access);
+      // optionally persist refresh
+      // if (refresh) await AsyncStorage.setItem('refreshToken', refresh);
+
+      dispatch(setAuth({ access, refresh, profile_id, profile_type }));
+
+      router.replace('/(tabs)/home');
+    } catch (err: any) {
+      const message = typeof err === 'string' ? err : err?.message || 'Failed to sign in';
+      Alert.alert('Sign-in error', message);
+    } finally {
+      setLoading(false);
+    }
   };
-
 
   return (
     <View style={styles.container}>
@@ -28,9 +68,8 @@ export default function SignInScreen() {
           <TextInput
             style={styles.input}
             placeholder="Email / username"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
+            value={username}
+            onChangeText={setUsername}
             autoCapitalize="none"
           />
         </View>
@@ -46,8 +85,8 @@ export default function SignInScreen() {
           />
         </View>
 
-        <TouchableOpacity style={styles.signInButton} onPress={handleSignIn}>
-          <Text style={styles.signInButtonText}>Sign In123</Text>
+        <TouchableOpacity style={styles.signInButton} onPress={handleSignIn} disabled={loading}>
+          <Text style={styles.signInButtonText}>{loading ? 'Signing In...' : 'Sign In'}</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.forgotPassword} onPress={()=> router.push('/(auth)/forgotpassword')} activeOpacity={0.7}>

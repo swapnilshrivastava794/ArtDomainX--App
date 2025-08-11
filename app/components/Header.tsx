@@ -13,10 +13,15 @@ import { Ionicons, Entypo, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native'; // Only if you handle navigation
+import { logout } from "../store/slices/authSlice"; // your logout action
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useDispatch } from 'react-redux';
+
 
 const Header = () => {
   const [settingsVisible, setSettingsVisible] = useState(false);
   const navigation = useNavigation(); // if needed for logout redirection
+  const dispatch = useDispatch();
 
   const handleMediaPick = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -32,12 +37,27 @@ const Header = () => {
     }
   };
 
-  const handleLogout = () => {
-    // Clear auth tokens from Redux, AsyncStorage, etc.
-    // Redirect to login screen
-    Alert.alert("Logged out");
-    setSettingsVisible(false);
-    // Example: navigation.replace("Login");
+const handleLogout = async () => {
+    try {
+      // 1️⃣ Clear Redux auth state
+      dispatch(logout());
+
+      // 2️⃣ Clear ALL AsyncStorage data
+      await AsyncStorage.clear();
+
+      // 3️⃣ Navigate to login
+      navigation.reset({
+        index: 0,
+        routes: [{ name: "Login" }],
+      });
+
+      Alert.alert("✅ Logged out successfully");
+    } catch (error) {
+      console.error("Logout error:", error);
+      Alert.alert("❌ Logout failed", "Please try again");
+    } finally {
+      setSettingsVisible(false);
+    }
   };
 
   return (
@@ -66,19 +86,19 @@ const Header = () => {
 
       {/* Modal for Settings / Logout */}
       <Modal
-        animationType="slide"
-        transparent
-        visible={settingsVisible}
-        onRequestClose={() => setSettingsVisible(false)}
-      >
-        <Pressable style={styles.modalOverlay} onPress={() => setSettingsVisible(false)}>
-          <View style={styles.modalContent}>
-            <Pressable style={styles.menuItem} onPress={handleLogout}>
-              <Text style={styles.menuText}>Logout</Text>
-            </Pressable>
-          </View>
-        </Pressable>
-      </Modal>
+      animationType="slide"
+      transparent
+      visible={settingsVisible}
+      onRequestClose={() => setSettingsVisible(false)}
+    >
+      <Pressable style={styles.modalOverlay} onPress={() => setSettingsVisible(false)}>
+        <View style={styles.modalContent}>
+          <Pressable style={styles.menuItem} onPress={handleLogout}>
+            <Text style={styles.menuText}>Logout</Text>
+          </Pressable>
+        </View>
+      </Pressable>
+    </Modal>
     </SafeAreaView>
   );
 };
@@ -131,3 +151,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
 });
+function dispatch(arg0: { payload: undefined; type: "auth/logout"; }) {
+  throw new Error('Function not implemented.');
+}
+
