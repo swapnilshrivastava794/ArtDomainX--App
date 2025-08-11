@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Modal,
   View,
@@ -11,96 +11,270 @@ import {
   KeyboardAvoidingView,
   Platform,
   SafeAreaView,
+  ActivityIndicator
 } from 'react-native';
+import { getPostComments , addPostComment , replyToComment   } from '../../service';
+import constant from '../../constant';
 
-const mockComments = Array.from({ length: 50 }, (_, i) => ({
-  id: i.toString(),
-  user: `user_${i}`,
-  avatar: 'https://i.pravatar.cc/150?img=' + (i + 10),
-  text: `This is comment ${i + 1}`,
-  time: `${i + 1}h`,
-  likes: Math.floor(Math.random() * 10),
-}));
+const CommentsModal = ({ visible, onClose, postId }) => {
+  const [comments, setComments] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+const [totalPages, setTotalPages] = useState(1); // from API
+const [loadingMore, setLoadingMore] = useState(false);
 
-const CommentsModal = ({ visible, onClose }) => {
-  const [comments, setComments] = useState(mockComments);
-  const [newComment, setNewComment] = useState('');
+  const [inputText, setInputText] = useState('');
+  const [replyToUser, setReplyToUser] = useState(null);
+  
 
-  const handleAddComment = () => {
-    if (newComment.trim()) {
-      const newEntry = {
-        id: Date.now().toString(),
-        user: 'you',
-        avatar: 'https://i.pravatar.cc/150?img=1',
-        text: newComment,
-        time: 'Just now',
-        likes: 0,
-      };
-      setComments([...comments, newEntry]);
-      setNewComment('');
+  // useEffect(() => {
+  //   const fetchComments = async () => {
+  //     try {
+  //       if (visible && postId) {
+  //         const res = await getPostComments(postId);
+  //         const fetched = res?.data?.data || [];
+
+  //         const mapped = fetched.map((c) => ({
+  //           id: c.id.toString(),
+  //           user: c.profile_username || 'User',
+  //           avatar:
+  //             c.profile_picture?.trim() !== ''
+  //               ? `${constant.DemoImageURl}/media/${c.profile_picture}`
+  //               : 'https://artdomainx.com/images/profile-pic.png',
+  //           text: c.content,
+  //           time: new Date(c.created_at).toLocaleString(),
+  //           likes: c.like_count || 0,
+  //           replies: (c.replies || []).map((r) => ({
+  //             id: r.id.toString(),
+  //             user: r.profile_username || 'User',
+  //             avatar:
+  //               r.profile_picture?.trim() !== ''
+  //                 ? `${constant.DemoImageURl}/media/${r.profile_picture}`
+  //                 : 'https://artdomainx.com/images/profile-pic.png',
+  //             text: r.content,
+  //             time: new Date(r.created_at).toLocaleString(),
+  //           })),
+  //         }));
+
+  //         setComments(mapped);
+  //       }
+  //     } catch (err) {
+  //       console.error('❌ Error fetching comments:', err);
+  //     }
+  //   };
+
+  //   fetchComments();
+  // }, [visible, postId]);
+
+
+  const fetchComments = async (page = 1) => {
+  if (!postId || loadingMore || page > totalPages) return;
+
+  try {
+    setLoadingMore(true);
+    const res = await getPostComments(postId, page);
+    const fetched = res?.data?.data || [];
+
+    const mapped = fetched.map((c) => ({
+      id: c.id.toString(),
+      user: c.profile_username || 'User',
+      avatar:
+        c.profile_picture?.trim() !== ''
+          ? `${constant.DemoImageURl}/media/${c.profile_picture}`
+          : 'https://artdomainx.com/images/profile-pic.png',
+      text: c.content,
+      time: new Date(c.created_at).toLocaleString(),
+      likes: c.like_count || 0,
+      replies: (c.replies || []).map((r) => ({
+        id: r.id.toString(),
+        user: r.profile_username || 'User',
+        avatar:
+          r.profile_picture?.trim() !== ''
+            ? `${constant.DemoImageURl}/media/${r.profile_picture}`
+            : 'https://artdomainx.com/images/profile-pic.png',
+        text: r.content,
+        time: new Date(r.created_at).toLocaleString(),
+      })),
+    }));
+
+    setComments((prev) => (page === 1 ? mapped : [...prev, ...mapped]));
+    setCurrentPage(res?.data?.current_page || page);
+    setTotalPages(res?.data?.total_pages || 1);
+  } catch (err) {
+    console.error('❌ Error fetching comments:', err);
+  } finally {
+    setLoadingMore(false);
+  }
+};
+
+// Initial load when visible/postId changes
+useEffect(() => {
+  if (visible && postId) {
+    setComments([]); // clear existing comments on new modal open
+    setCurrentPage(1);
+    fetchComments(1);
+  }
+}, [visible, postId]);
+
+// Function for FlatList infinite scroll
+const handleLoadMore = () => {
+  if (currentPage < totalPages && !loadingMore) {
+    fetchComments(currentPage + 1);
+  }
+};
+  const handleSendComment = async () => {
+    const trimmed = inputText.trim();
+    if (!trimmed) return;
+      // ✅ Clear input immediately on submit
+  setInputText('');
+
+    if (replyToUser) {
+      // ✅ Call real replyToComment API
+      const res = await replyToComment(replyToUser.id, trimmed);
+      const newReply = res?.data?.data;
+
+      setComments((prev) =>
+        prev.map((comment) =>
+          comment.id === replyToUser.id
+            ? {
+                ...comment,
+                replies: [
+                  ...comment.replies,
+                  {
+                    id: newReply?.id?.toString() ?? Date.now().toString(),
+                    user: newReply?.profile_username ?? 'you',
+                    avatar:
+                      newReply?.profile_picture?.trim()
+                        ? `${constant.DemoImageURl}/media/${newReply.profile_picture}`
+                        : 'https://artdomainx.com/images/profile-pic.png',
+                    text: newReply?.content ?? trimmed,
+                    time: new Date(newReply?.created_at || Date.now()).toLocaleString(),
+                  },
+                ],
+              }
+            : comment
+        )
+      );
+    } else {
+      // ✅ Parent comment post to API
+      const res = await addPostComment(postId, trimmed);
+      const newComment = res?.data?.data;
+
+      setComments((prev) => [
+        ...prev,
+        {
+          id: newComment?.id?.toString() ?? Date.now().toString(),
+          user: newComment?.profile_username ?? 'you',
+          avatar:
+            newComment?.profile_picture?.trim()
+              ? `${constant.DemoImageURl}/media/${newComment.profile_picture}`
+              : 'https://artdomainx.com/images/profile-pic.png',
+          text: newComment?.content ?? trimmed,
+          time: new Date(newComment?.created_at || Date.now()).toLocaleString(),
+          replies: [],
+        },
+      ]);
+      await getPostComments();  // ⬅️ YAHI PE ADD KARNA HAI
     }
+    setInputText('');
+    setReplyToUser(null);
   };
 
-  const renderItem = ({ item }) => (
-    <View style={styles.commentRow}>
-      <Image source={{ uri: item.avatar }} style={styles.avatar} />
-      <View style={styles.commentContent}>
-        <Text>
-          <Text style={styles.username}>{item.user} </Text>
-          <Text>{item.text}</Text>
-        </Text>
-        <View style={styles.commentMeta}>
-          <Text style={styles.metaText}>{item.time} • Reply</Text>
-          {item.likes > 0 && (
-            <Text style={[styles.metaText, { marginLeft: 10 }]}>
-              ❤️ {item.likes}
-            </Text>
-          )}
-        </View>
-      </View>
-      <TouchableOpacity>
-        <Text style={styles.heartIcon}>♡</Text>
-      </TouchableOpacity>
-    </View>
-  );
 
   return (
     <Modal visible={visible} animationType="slide">
-      <SafeAreaView style={styles.container}>
-        <KeyboardAvoidingView
-          style={styles.flex}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        >
-          {/* Close Button */}
-          <View style={styles.header}>
-            <Text style={styles.headerTitle}>Comments</Text>
-            <TouchableOpacity onPress={onClose}>
-              <Text style={styles.closeButton}>✕</Text>
+      <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+        <View style={styles.header}>
+          <Text style={styles.title}>Comments</Text>
+          <TouchableOpacity onPress={onClose}>
+            <Text style={styles.close}>Close</Text>
+          </TouchableOpacity>
+        </View>
+
+
+
+        <FlatList
+          data={comments}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ padding: 16 }}
+          onEndReached={handleLoadMore}
+  onEndReachedThreshold={0.2}
+  ListFooterComponent={
+    loadingMore ? <ActivityIndicator size="small" color="blue" /> : null
+  }
+          renderItem={({ item }) => (
+            <View style={styles.commentBlock}>
+              <Image source={{ uri: item.avatar }} style={styles.avatar} />
+              <View style={{ flex: 1 }}>
+                <Text style={styles.user}>{item.user}</Text>
+                <Text>{item.text}</Text>
+                <Text style={styles.time}>{item.time}</Text>
+
+                {item.replies?.map((reply) => (
+                  <View key={reply.id} style={styles.replyBlock}>
+                    <Image source={{ uri: reply.avatar }} style={styles.avatarSmall} />
+                    <View>
+                      <Text style={styles.user}>{reply.user}</Text>
+                      <Text>{reply.text}</Text>
+                      <Text style={styles.time}>{reply.time}</Text>
+                    </View>
+                  </View>
+                ))}
+
+                <TouchableOpacity
+                  onPress={() => {
+                    setReplyToUser(item);
+                    setInputText(`@${item.user} `); // ✅ Set @username in input
+                  }}
+                >
+                  <Text style={styles.replyBtn}>Reply</Text>
+                </TouchableOpacity>
+
+              </View>
+            </View>
+          )}
+        />
+        {replyToUser && (
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              backgroundColor: '#f0f0f0',
+              marginHorizontal: 10,
+              marginBottom: 6,
+              paddingHorizontal: 12,
+              paddingVertical: 8,
+              borderRadius: 10,
+            }}
+          >
+            <Text style={{ color: '#555', fontSize: 14 }}>
+              Replying to <Text style={{ fontWeight: 'bold' }}>@{replyToUser.user}</Text>
+            </Text>
+            <TouchableOpacity
+              onPress={() => {
+                setReplyToUser(null);
+                setInputText('');
+              }}
+            >
+              <Text style={{ color: '#ff4d4d', fontWeight: 'bold', fontSize: 16 }}>✕</Text>
             </TouchableOpacity>
           </View>
+        )}
+        
 
-          <FlatList
-            data={comments}
-            keyExtractor={(item) => item.id}
-            renderItem={renderItem}
-            contentContainerStyle={styles.commentList}
-            showsVerticalScrollIndicator={false}
-          />
-
-          <View style={styles.inputRow}>
-            <Image
-              source={{ uri: 'https://i.pravatar.cc/150?img=2' }}
-              style={styles.avatarSmall}
-            />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={80}
+        >
+          <View style={styles.inputContainer}>
             <TextInput
-              value={newComment}
-              onChangeText={setNewComment}
+              value={inputText}
+              onChangeText={setInputText}
               placeholder="Add a comment..."
               style={styles.input}
-              placeholderTextColor="#999"
             />
-            <TouchableOpacity onPress={handleAddComment}>
-              <Text style={styles.postButton}>Post</Text>
+            <TouchableOpacity onPress={handleSendComment}>
+              <Text style={styles.send}>Post</Text>
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -110,88 +284,48 @@ const CommentsModal = ({ visible, onClose }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#fff' },
-  flex: { flex: 1 },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 0.5,
-    borderBottomColor: '#ccc',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderColor: '#ccc',
   },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  closeButton: {
-    fontSize: 22,
-    color: '#000',
-  },
-  commentList: {
-    padding: 12,
-    paddingBottom: 90,
-  },
-  commentRow: {
+  title: { fontSize: 18, fontWeight: 'bold' },
+  close: { color: 'blue' },
+  commentBlock: {
     flexDirection: 'row',
-    alignItems: 'flex-start',
     marginBottom: 16,
+    alignItems: 'flex-start',
   },
-  avatar: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    marginRight: 12,
-  },
-  commentContent: {
-    flex: 1,
-  },
-  username: {
-    fontWeight: '600',
-    color: '#222',
-  },
-  commentMeta: {
+  avatar: { width: 40, height: 40, borderRadius: 20, marginRight: 10 },
+  avatarSmall: { width: 30, height: 30, borderRadius: 15, marginRight: 8 },
+  user: { fontWeight: 'bold' },
+  time: { fontSize: 12, color: 'gray' },
+  replyBlock: {
     flexDirection: 'row',
+    marginTop: 8,
+    marginLeft: 20,
+  },
+  replyBtn: {
+    color: 'blue',
     marginTop: 4,
+    fontSize: 13,
   },
-  metaText: {
-    fontSize: 12,
-    color: '#666',
-  },
-heartIcon: {
-  fontSize: 22, // ⬅️ increased from 16 to 22 (or go even higher if needed)
-  color: '#444',
-  paddingLeft: 8,
-  paddingTop: 4,
-},
-
-  inputRow: {
+  inputContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    borderTopWidth: 0.5,
-    borderTopColor: '#ccc',
+    borderTopWidth: 1,
+    borderColor: '#ddd',
     padding: 12,
-    backgroundColor: '#fff',
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-  },
-  avatarSmall: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    marginRight: 8,
+    alignItems: 'center',
   },
   input: {
     flex: 1,
-    fontSize: 15,
-    color: '#000',
+    paddingHorizontal: 10,
   },
-  postButton: {
-    color: '#007AFF',
-    marginLeft: 10,
-    fontWeight: '600',
+  send: {
+    color: 'blue',
+    fontWeight: 'bold',
   },
 });
 

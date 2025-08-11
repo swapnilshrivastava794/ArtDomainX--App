@@ -1,17 +1,18 @@
-import { Stack } from 'expo-router';
+import { Stack, Tabs } from 'expo-router';
 import { View } from 'react-native';
 import BottomTabs from '../components/BottomTabs';
 
 export default function TabsLayout() {
   return (
     <View style={{ flex: 1 }}>
-      <Stack
+      <Tabs
         screenOptions={{
           headerShown: false,
-          animation: 'default', 
+          animation: 'none', // instant switch like Instagram
+          lazy: true,        // only load screens when first opened 
         }}
       >
-      </Stack>
+      </Tabs>
       <BottomTabs />
     </View>
   );

@@ -12,6 +12,9 @@ import CommentsModal from './screens/CommentScreen';
 import * as Animatable from 'react-native-animatable';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
+import {likePost , getPostById} from '../service'
+import { useDispatch } from 'react-redux';
+import { updatePostReaction } from '../store/slices/postsSlice'; // path adjust karo
 
 interface PostType {
   id: number;
@@ -23,6 +26,8 @@ interface PostType {
   commentCount: number;
   shareCount: number;
   viewCount: number;
+  isLiked?: boolean;       // ✅ Add this
+  reactionId?: number | null; // ✅ Add this
   
 }
 
@@ -31,15 +36,106 @@ interface PostCardProps {
   onAddComment: (postId: number, commentText: string) => void;
 }
 
+
+
+
 const PostCard: React.FC<PostCardProps> = ({ post, onAddComment ,  }) => {
   const [showComments, setShowComments] = useState(false);
-  const [liked, setLiked] = useState(false);
+  const [liked, setLiked] = useState(!!post.reactionId);
   const heartRef = useRef<Animatable.View | null>(null);
+  const dispatch = useDispatch();
 
-  const handleLike = () => {
-    setLiked(prev => !prev);
+
+// const handleLike = async () => {
+//   try {
+//     setLiked(prev => !prev);
+//     heartRef.current?.bounceIn();
+
+//     console.log("▶ Liking post:", post.id);
+
+//     const res = await likePost(post.id, 'like');
+//     console.log('✅ Like API Success:', res?.data);
+
+//     const updated = await getPostById(post.id);
+//     const updatedPost = updated?.data?.data; // ✅ FIXED ACCESS
+
+//     console.log("✅ Updated post fetched:", updatedPost);
+//     console.log('✅ reaction_count:', updatedPost?.reaction_count);
+
+//     if (!updatedPost) {
+//       console.warn('⚠️ Updated post not returned properly');
+//       return;
+//     }
+
+//     const updatedReactionCount = typeof updatedPost.reaction_count === 'number'
+//       ? updatedPost.reaction_count
+//       : post.reactionCount; // fallback to original
+
+//     const userReactionType = updatedPost?.user_reaction_type;
+//     setLiked(userReactionType === 'like');
+
+//     dispatch(updatePostReaction({
+//       postId: post.id,
+//       newCount: updatedReactionCount,
+//       userReactionType,
+//     }));
+
+//   } catch (error) {
+//     console.error('❌ Error during like:', error?.response?.data || error.message || error);
+//   }
+// };
+
+const handleLike = async () => {
+  try {
+    // Optimistic count update
+    dispatch(updatePostReaction({
+      postId: post.id,
+      newCount: liked ? post.reactionCount - 1 : post.reactionCount + 1,
+      userReactionType: liked ? null : 'like',
+    }));
+
+    setLiked(prev => !prev); // Toggle heart UI
     heartRef.current?.bounceIn();
-  };
+
+    console.log("▶ Liking post:", post.id);
+
+    const res = await likePost(post.id, 'like');
+    console.log('✅ Like API Success:', res?.data);
+
+    const updated = await getPostById(post.id);
+    const updatedPost = updated?.data?.data;
+
+    console.log("✅ Updated post fetched:", updatedPost);
+    console.log('✅ reaction_count:', updatedPost?.reaction_count);
+
+    if (!updatedPost) {
+      console.warn('⚠️ Updated post not returned properly');
+      return;
+    }
+
+    const updatedReactionCount = typeof updatedPost.reaction_count === 'number'
+      ? updatedPost.reaction_count
+      : post.reactionCount;
+
+    const userReactionType = updatedPost?.user_reaction_type;
+    setLiked(userReactionType === 'like');
+
+    dispatch(updatePostReaction({
+      postId: post.id,
+      newCount: updatedReactionCount,
+      userReactionType,
+    }));
+
+  } catch (error) {
+    console.error('❌ Error during like:', error?.response?.data || error.message || error);
+  }
+};
+
+
+
+
+
+
 
   const doubleTap = Gesture.Tap()
     .numberOfTaps(2)
@@ -82,6 +178,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onAddComment ,  }) => {
               </Animatable.View>
               <Text style={styles.reactionText}>{post.reactionCount}</Text>
             </TouchableOpacity>
+
 
             <TouchableOpacity style={styles.reactionBtn} onPress={() => setShowComments(true)}>
               <Ionicons name="chatbubble" size={20} color="#fff" />
@@ -139,6 +236,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onAddComment ,  }) => {
           onClose={() => setShowComments(false)}
           onAddComment={handleAddComment}
           comments={post.comments}
+          postId={post.id} // ✅ Added post ID
         />
       </View>
     </GestureDetector>

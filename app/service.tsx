@@ -93,6 +93,42 @@ export async function sendForgotOtp(email: string) {
 export async function getAllPosts(page = 1) {
   return axiosInstance.get(`media/all-posts/?page=${page}`);
 }
+export const getPostById = (id :any) => {
+  return axiosInstance.get(`media/post/${id}/`);
+};
+export const getPostComments = (id :any) => {
+  return axiosInstance.get(`media/posts-comments/${id}/`);
+};
+
+export async function addPostComment(postId: number | string, content: string) {
+  return axiosInstance.post(
+    `media/posts-comments/${postId}/`,{ content },
+  );
+}
+
+export async function replyToComment(commentId: number | string, content: string) {
+  const formData = new FormData();
+  formData.append('content', content);
+
+  return axiosInstance.post(`media/comment/reply/${commentId}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+}
+
+
+
+export const likePost = (postId: number | string, reactionType: 'like' | 'dislike') => {
+  const formData = new FormData();
+  formData.append('reaction_type', reactionType);
+
+  return axiosInstance.post(`media/reactions/${postId}/`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+    },
+  });
+};
 
 
 export async function getUserNotifications(params = {}){

@@ -1,16 +1,23 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Image,
   StyleSheet,
   TouchableOpacity,
   Alert,
+  Modal,
+  Text,
+  Pressable,
 } from 'react-native';
 import { Ionicons, Entypo, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
+import { useNavigation } from '@react-navigation/native'; // Only if you handle navigation
 
 const Header = () => {
+  const [settingsVisible, setSettingsVisible] = useState(false);
+  const navigation = useNavigation(); // if needed for logout redirection
+
   const handleMediaPick = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.All,
@@ -19,20 +26,26 @@ const Header = () => {
     });
 
     if (!result.canceled) {
-      // ⚠️ Right now we're just showing URI in alert — replace with upload logic or global state
       const asset = result.assets[0];
       Alert.alert('Media Selected', asset.uri);
       console.log('Media selected from Header:', asset);
-      // You can also pass this to a post composer or upload it directly
     }
+  };
+
+  const handleLogout = () => {
+    // Clear auth tokens from Redux, AsyncStorage, etc.
+    // Redirect to login screen
+    Alert.alert("Logged out");
+    setSettingsVisible(false);
+    // Example: navigation.replace("Login");
   };
 
   return (
     <SafeAreaView edges={['top']} style={styles.safeArea}>
       <View style={styles.container}>
-        {/* Left: Menu, Search, Add */}
+        {/* Left section */}
         <View style={styles.leftSection}>
-          <TouchableOpacity style={styles.iconBtn}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => setSettingsVisible(true)}>
             <Entypo name="menu" size={22} color="#444" />
           </TouchableOpacity>
           <TouchableOpacity style={styles.iconBtn}>
@@ -43,19 +56,34 @@ const Header = () => {
           </TouchableOpacity>
         </View>
 
-        {/* Right: Logo */}
+        {/* Logo */}
         <Image
           source={{ uri: 'https://artdomainx.com/images/artdomain-logo.png' }}
           style={styles.logo}
           resizeMode="contain"
         />
       </View>
+
+      {/* Modal for Settings / Logout */}
+      <Modal
+        animationType="slide"
+        transparent
+        visible={settingsVisible}
+        onRequestClose={() => setSettingsVisible(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setSettingsVisible(false)}>
+          <View style={styles.modalContent}>
+            <Pressable style={styles.menuItem} onPress={handleLogout}>
+              <Text style={styles.menuText}>Logout</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
     </SafeAreaView>
   );
 };
 
 export default Header;
-
 
 const styles = StyleSheet.create({
   safeArea: {
@@ -79,7 +107,27 @@ const styles = StyleSheet.create({
     marginRight: 18,
   },
   logo: {
-    width: 100,
-    height: 40,
+    height: 36,
+    width: 120,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+  },
+  menuItem: {
+    paddingVertical: 12,
+  },
+  menuText: {
+    fontSize: 16,
+    color: 'red',
+    fontWeight: 'bold',
   },
 });
