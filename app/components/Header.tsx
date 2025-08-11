@@ -4,33 +4,15 @@ import {
   Image,
   StyleSheet,
   TouchableOpacity,
-  Alert,
-  Modal,
-  Text,
-  Pressable,
 } from 'react-native';
 import { Ionicons, Entypo, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as ImagePicker from 'expo-image-picker';
-import { useNavigation } from '@react-navigation/native'; // Only if you handle navigation
+import { router, useRouter, useNavigation } from 'expo-router';
+import { DrawerActions } from '@react-navigation/native';
 
 const Header = () => {
-  const [settingsVisible, setSettingsVisible] = useState(false);
-  const navigation = useNavigation(); // if needed for logout redirection
-
-  const handleMediaPick = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.All,
-      allowsEditing: true,
-      quality: 0.8,
-    });
-
-    if (!result.canceled) {
-      const asset = result.assets[0];
-      Alert.alert('Media Selected', asset.uri);
-      console.log('Media selected from Header:', asset);
-    }
-  };
+  const router = useRouter();
+  const navigation = useNavigation();
 
   const handleLogout = () => {
     // Clear auth tokens from Redux, AsyncStorage, etc.
@@ -45,13 +27,27 @@ const Header = () => {
       <View style={styles.container}>
         {/* Left section */}
         <View style={styles.leftSection}>
-          <TouchableOpacity style={styles.iconBtn} onPress={() => setSettingsVisible(true)}>
+          <TouchableOpacity
+            style={styles.iconBtn}
+            activeOpacity={0.6}
+            onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          >
             <Entypo name="menu" size={22} color="#444" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn}>
+
+          <TouchableOpacity
+            style={styles.iconBtn}
+            activeOpacity={0.6}
+            onPress={() => router.push('/components/searchbar')}
+          >
             <Feather name="search" size={22} color="#444" />
           </TouchableOpacity>
-          <TouchableOpacity style={styles.iconBtn} onPress={handleMediaPick}>
+
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => router.push('/components/postImage')}
+            activeOpacity={0.6}
+          >
             <Ionicons name="add-circle-outline" size={24} color="#444" />
           </TouchableOpacity>
         </View>

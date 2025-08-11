@@ -9,7 +9,7 @@ import {
   SafeAreaView,
   ActivityIndicator,
   FlatList,
-  RefreshControl, // Import RefreshControl
+  RefreshControl, 
 } from 'react-native';
 import Feather from '@expo/vector-icons/Feather';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
@@ -21,18 +21,17 @@ const FILTERS = [
   'like',
   'comment',
   'follow',
-  'friend_request',
-  'friend_accept',
+  'friend request',
+  'friend accept',
   'tag',
   'mention',
   'share',
-  'post_create',
-  'event_media',
-  'event_reminder',
+  'post create',
+  'event media',
+  'event reminder',
   'status change',
   'event create',
-  'event rsvp',
-  'mentor eligibility',
+  'event response',
 ];
 
 const NotificationItem = ({ item }) => (
@@ -41,7 +40,7 @@ const NotificationItem = ({ item }) => (
       source={
         item.sender_profile_picture
           ? { uri: `https://backend.artdomainx.com${item.sender_profile_picture}` }
-          : require('../../assets/images/profile.png') 
+          : require('../../assets/images/profileicon.png') 
       }
       style={styles.avatar}
     />
@@ -88,10 +87,15 @@ const Notifications = () => {
     fetchNotifications(); 
   }, [fetchNotifications]);
 
-  const filteredNotifications =
-    selectedFilter === 'all'
-      ? notifications
-      : notifications.filter((n) => n.notification_type?.toLowerCase() === selectedFilter.toLowerCase());
+const filteredNotifications =
+  selectedFilter === 'all'
+    ? notifications
+    : notifications.filter((n) => {
+        const type = n.notification_type?.toLowerCase().replace(/_/g, ' ').trim();
+        const filter = selectedFilter.toLowerCase().replace(/_/g, ' ').trim();
+        return type === filter;
+      });
+
 
   if (loading) {
     return (
@@ -162,12 +166,12 @@ const Notifications = () => {
               </Text>
             </View>
           )}
-          // Add these props for pull-to-refresh
+         
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#1877F2" // Optional: customize the spinner color
+              tintColor="#1877F2" 
             />
           }
         />
@@ -210,7 +214,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: '30%',
     marginTop: verticalScale(20),
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   filterRow: {
     paddingVertical: verticalScale(10),
@@ -237,7 +241,7 @@ const styles = StyleSheet.create({
   filterText: {
     fontSize: scale(12),
     color: '#333',
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   activeFilterText: {
     color: '#fff',
@@ -278,19 +282,19 @@ const styles = StyleSheet.create({
     fontSize: scale(13),
     fontWeight: '600',
     color: '#000',
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   message: {
     fontSize: scale(12),
     color: '#333',
     marginTop: verticalScale(2),
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   time: {
     fontSize: scale(10),
     color: '#888',
     marginTop: verticalScale(4),
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   noNotificationsContainer: {
     flex: 1,

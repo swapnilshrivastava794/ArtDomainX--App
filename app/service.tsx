@@ -152,7 +152,133 @@ export async function markNotificationsAsRead(notificationIds: number[]){
       throw error;
     }
 }
-  
 
+export async function searchUser(name: string) {
+  return axiosInstance.get("profile/profiles/search/", {
+    params: { name },
+  });
+}
+
+
+// GET API FOR HASHTAG SEARCH {{url}}/media/hashtags-list/?search=query
+export async function searchHashtag(query: string) {
+  return axiosInstance.get("media/hashtags-list/", {
+    params: { search: query },
+  });
+}
+
+
+// export async function searchUserByUsername(username) {
+//   return axiosInstance.get("profile/profiles/search/", {
+//     params: { name: username },
+//   });
+// }
+  
+export async function fetchHashtags(searchQuery: string) {
+  return axiosInstance.get("media/hashtags-list/", {
+    params: { search: searchQuery },
+  });
+}
+
+export async function fetchHashtag(searchQuery: string) {
+  return axiosInstance.get("media/hashtags-list/", {
+    params: { search: searchQuery },
+  });
+}
+
+export async function fetchDraftPost() {
+  return axiosInstance.get("media/posts/my-drafts/");
+}
+
+export async function describeArt(imageFile) {
+  const formData = new FormData();
+  formData.append("image", imageFile);
+
+  return axiosInstance.post("ai/art/describe/", formData); 
+}
+
+export async function fetchAllPosts() {
+  return axiosInstance.get("media/all-posts/");
+}
+
+export async function fetchTrendingPosts() {
+  return axiosInstance.get("media/posts/trending/");
+}
+
+export async function fetchPostsByPage(page) {
+  return axiosInstance.get(`media/all-posts/?page=${page}`);
+}
+
+export async function increasePostViewCount(postId) {
+  return axiosInstance.post(`media/post-view/${postId}/`);
+}
+
+export async function reactToPost(postId, reactionType) {
+  return axiosInstance.post(`media/reactions/${postId}/`, {
+    reaction_type: reactionType,
+  });
+}
+
+export async function postShareCount(postId) {
+  return axiosInstance.post(`media/share/posts/${postId}/`);
+}
+
+export async function fetchSinglePost(postId) {
+  return axiosInstance.get(`media/post/${postId}/`);
+}
+
+export async function uploadPost(formData) {
+  return axiosInstance.post("media/post/", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
+}
+
+export async function uploadCanvasImage(formData) {
+  return axiosInstance.post("profile/canvas/", formData);
+}
+
+export async function fetchCanvasImage(userId) {
+  return axiosInstance.get(`profile/canvas/${userId}/`);
+}
+
+// TO GET PINNED POST OF THE USER  /media/post/userId
+export async function fetchPinnedPost(userId) {
+  return axiosInstance.get(
+    `media/profile-trending-posts/profile-id/${userId}/`,
+  );
+}
+
+export async function deletePost(postId) {
+  return axiosInstance.delete(`media/post/${postId}/`);
+}
+
+// TO PIN A POST /media/post/postid/
+export async function pinPost(postId, isPinned = true) {
+  return axiosInstance.put(`media/post/${postId}/`, { is_pinned: isPinned });
+}
+
+export async function deletePostReaction(postId) {
+  return axiosInstance.delete(`media/post-reactions/${postId}/`);
+}
+
+export const fetchUserProfile = async (userId: string) => {
+  return axiosInstance.get(`profile/profile/${userId}/`);
+};
+
+// You can also add a function for fetching posts, if needed
+export const fetchUserPosts = async (userId: string) => {
+  return axiosInstance.get(`profile/profile/${userId}/posts/`);
+};
+
+export const fetchUserByUsername = async (username: string) => {
+  try {
+    const response = await axiosInstance.get(`profile/profile-detail/${username}/`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
 
 export default axiosInstance;

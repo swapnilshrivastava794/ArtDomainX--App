@@ -1,199 +1,314 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   Image,
   StyleSheet,
-  ScrollView,
   TouchableOpacity,
   SafeAreaView,
   RefreshControl,
   FlatList,
   Dimensions,
   Modal,
+  Platform,
+  ActivityIndicator,
+  ActionSheetIOS,
+  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons } from '@expo/vector-icons';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import Entypo from '@expo/vector-icons/Entypo';
+import { router, useLocalSearchParams } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
+import { useSelector } from 'react-redux';
+import {
+  fetchUserProfile,
+  fetchCanvasImage,
+  uploadCanvasImage,
+  fetchPinnedPost,
+  deletePost,
+  pinPost,
+  fetchAllPosts,
+} from '../service';
 
+const BASE_URL = 'https://backend.artdomainx.com';
 const { width } = Dimensions.get('window');
 const numColumns = 3;
 const gridItemMargin = 4;
 const gridItemSize = (width - (numColumns + 1) * gridItemMargin) / numColumns;
 
 const ProfileScreen = () => {
-  const [activeTab, setActiveTab] = useState('Top');
+  const { userId: paramUserId } = useLocalSearchParams(); 
+  const [activeTab, setActiveTab] = useState('All Posts');
   const [refreshing, setRefreshing] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedImage, setSelectedImage] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [posts, setPosts] = useState([]);
+  const [pinnedPosts, setPinnedPosts] = useState([]);
+  const [canvasImage, setCanvasImage] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const tabs = ['Top', 'Recent', 'Short'];
-    const profileImage = 'https://i.pravatar.cc/100?img=1';
+  const loggedInProfileId = useSelector((state) => state.auth.profile_id); 
+  const profileIdToFetch = paramUserId || loggedInProfileId;
+  const tabs = ['All Posts', 'Pinned'];
+  const isOwnProfile = loggedInProfileId === profileIdToFetch;
 
+  const fetchData = async () => {
+    if (!profileIdToFetch) {
+      setLoading(false);
+      setError('No profile ID available to fetch data.');
+      return;
+    }
+    setLoading(true);
+    setError('');
+    try {
+      const userProfileResponse = await fetchUserProfile(profileIdToFetch);
+      setUserProfile(userProfileResponse?.data?.data || null);
 
-  // Using public image URLs as local assets are not supported in this environment
-  const mediaTop = [
-    { id: 1, uri: 'https://picsum.photos/seed/top1/300' },
-    { id: 2, uri: 'https://picsum.photos/seed/top2/300' },
-    { id: 3, uri: 'https://picsum.photos/seed/top3/300' },
-    { id: 4, uri: 'https://picsum.photos/seed/top4/300' },
-    { id: 5, uri: 'https://picsum.photos/seed/top5/300' },
-    { id: 6, uri: 'https://picsum.photos/seed/top6/300' },
-    { id: 7, uri: 'https://picsum.photos/seed/top7/300' },
-    { id: 8, uri: 'https://picsum.photos/seed/top8/300' },
-    { id: 9, uri: 'https://picsum.photos/seed/top9/300' },
-    { id: 10, uri: 'https://picsum.photos/seed/recent1/300' },
-  ];
-  const mediaRecent = [
-    { id: 10, uri: 'https://picsum.photos/seed/recent1/300' },
-    { id: 11, uri: 'https://picsum.photos/seed/recent2/300' },
-    { id: 12, uri: 'https://picsum.photos/seed/recent3/300' },
-  ];
-  const mediaShort = [
-    { id: 13, uri: 'https://picsum.photos/seed/short1/300' },
-    { id: 14, uri: 'https://picsum.photos/seed/short2/300' },
-    { id: 15, uri: 'https://picsum.photos/seed/short3/300' },
-  ];
+      const canvasResponse = await fetchCanvasImage(profileIdToFetch);
+      if (canvasResponse?.data?.data?.[0]?.image) {
+        setCanvasImage(`${BASE_URL}${canvasResponse.data.data[0].image}`);
+      } else {
+        setCanvasImage('https://picsum.photos/seed/cover/300');
+      }
 
-  const getMediaByTab = () => {
-    switch (activeTab) {
-      case 'Recent':
-        return mediaRecent;
-      case 'Short':
-        return mediaShort;
-      default:
-        return mediaTop;
+      const allPostsResponse = await fetchAllPosts();
+      const userPosts = (allPostsResponse?.data?.data || []).filter(
+        post => post.created_by === profileIdToFetch
+      );
+      setPosts(userPosts);
+
+      const pinnedPostsResponse = await fetchPinnedPost(profileIdToFetch);
+      setPinnedPosts(pinnedPostsResponse?.data?.data || []);
+    } catch (e) {
+      console.error('Error fetching profile data:', e);
+      setError('Failed to load profile data. Please try again.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
   };
 
+  useEffect(() => {
+    if (profileIdToFetch) fetchData();
+  }, [profileIdToFetch]);
+
   const onRefresh = () => {
     setRefreshing(true);
-    // Simulate fetching new data
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
+    fetchData();
   };
 
-  const renderGridItem = ({ item }) => (
-    <TouchableOpacity
-      style={styles.gridItemContainer}
-      onPress={() => {
-        setSelectedImage(item.uri);
-        setModalVisible(true);
-      }}
-    >
-      <Image source={{ uri: item.uri }} style={styles.gridItem} />
-    </TouchableOpacity>
+  const handlePinPost = async (postId, isPinned) => {
+    try {
+      await pinPost(postId, !isPinned);
+      Alert.alert('Success', `Post has been ${isPinned ? 'unpinned' : 'pinned'}.`);
+      fetchData();
+    } catch (e) {
+      console.error('Error pinning post:', e);
+      Alert.alert('Error', 'Failed to pin post. Please try again.');
+    }
+  };
+
+  const handleDeletePost = async (postId) => {
+    Alert.alert(
+      'Delete Post',
+      'Are you sure you want to delete this post?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Delete', style: 'destructive', onPress: async () => {
+            try {
+              await deletePost(postId);
+              Alert.alert('Success', 'Post has been deleted.');
+              fetchData();
+            } catch (e) {
+              console.error('Error deleting post:', e);
+              Alert.alert('Error', 'Failed to delete post.');
+            }
+        }},
+      ]
+    );
+  };
+
+  const showPostActions = (post) => {
+    const isPinned = post.is_pinned;
+    const actionOptions = [
+      isPinned ? 'Unpin Post' : 'Pin Post',
+      'Delete Post',
+      'Cancel',
+    ];
+    const isOwner = userProfile?.id === post.created_by; 
+    if (!isOwner) {
+      Alert.alert('Access Denied', 'You do not have permission to perform this action.');
+      return;
+    }
+    if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: actionOptions,
+          destructiveButtonIndex: 1,
+          cancelButtonIndex: 2,
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 0) handlePinPost(post.id, isPinned);
+          else if (buttonIndex === 1) handleDeletePost(post.id);
+        }
+      );
+    } else {
+      Alert.alert(
+        'Post Options', '',
+        [
+          { text: actionOptions[0], onPress: () => handlePinPost(post.id, isPinned) },
+          { text: actionOptions[1], onPress: () => handleDeletePost(post.id), style: 'destructive' },
+          { text: actionOptions[2], style: 'cancel' },
+        ]
+      );
+    }
+  };
+
+  const renderGridItem = ({ item }) => {
+    const mediaUrl = (Array.isArray(item.media) && item.media[0]?.file)
+      ? item.media[0].file
+      : 'https://placehold.co/300x300?text=No+Image';
+    return (
+      <TouchableOpacity
+        style={styles.gridItemContainer}
+        onPress={() => { setSelectedImage(mediaUrl); setModalVisible(true); }}
+        onLongPress={() => showPostActions(item)}
+      >
+        <Image source={{ uri: mediaUrl }} style={styles.gridItem} />
+        {item.is_pinned && (
+          <View style={styles.pinnedIcon}>
+            <MaterialCommunityIcons name="pin" size={16} color="white" />
+          </View>
+        )}
+      </TouchableOpacity>
+    );
+  };
+
+  const handleUploadCanvasImage = async () => {
+    const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permissionResult.granted) {
+      Alert.alert('Permission Required', 'You need to allow access to the media library.');
+      return;
+    }
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 1,
+    });
+    if (!result.canceled && result.assets?.length > 0) {
+      const selectedAsset = result.assets[0];
+      const formData = new FormData();
+      formData.append('canvas_picture', {
+        uri: selectedAsset.uri,
+        name: selectedAsset.fileName || 'canvas_image.jpg',
+        type: selectedAsset.mimeType || 'image/jpeg',
+      });
+      try {
+        await uploadCanvasImage(formData);
+        Alert.alert('Success', 'Cover image uploaded successfully!');
+        fetchData();
+      } catch (e) {
+        console.error('Error uploading canvas image:', e);
+        Alert.alert('Error', 'Failed to upload canvas image.');
+      }
+    }
+  };
+
+  const getMediaByTab = () => activeTab === 'Pinned' ? pinnedPosts : posts;
+
+  if (loading) {
+    return <View style={[styles.container, styles.center]}><ActivityIndicator size="large" color="#4f46e5" /></View>;
+  }
+  if (error) {
+    return <View style={[styles.container, styles.center]}><Text style={styles.errorText}>{error}</Text></View>;
+  }
+
+  const ListHeader = () => (
+    <>
+      {/* Cover Image */}
+      <View style={styles.coverContainer}>
+        <Image source={{ uri: canvasImage }} style={styles.coverImage} />
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <Ionicons name="arrow-back" size={24} color="white" />
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuBtn}>
+          <Ionicons name="menu" size={24} color="white" />
+        </TouchableOpacity>
+      </View>
+      {/* Profile Section */}
+      <View style={styles.profileContainer}>
+        <View style={styles.avatarWrapper}>
+          <Image source={{ uri: userProfile?.profile_picture || 'https://i.pravatar.cc/100' }} style={styles.avatar}/>
+          {isOwnProfile && (
+            <TouchableOpacity style={styles.editPhotoBtn} onPress={handleUploadCanvasImage}>
+              <MaterialCommunityIcons name="plus-circle" size={24} color="#007bff" />
+            </TouchableOpacity>
+          )}
+        </View>
+
+        {/* Conditional Buttons */}
+        <View style={styles.buttonRow}>
+          {isOwnProfile ? (
+            <TouchableOpacity style={styles.editProfileBtn} onPress={() => router.push('/components/EditProfile')}>
+              <Text style={styles.editProfileText}>Edit Profile</Text>
+              <Entypo name="edit" size={16} color="black" />
+            </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity style={styles.followBtn}>
+                <Text style={styles.followText}>Follow</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.addFriendBtn}>
+                <Text style={styles.addFriendText}>Add Friend</Text>
+              </TouchableOpacity>
+            </>
+          )}
+        </View>
+      </View>
+
+      {/* Bio */}
+      <View style={styles.bioContainer}>
+        <Text style={styles.name}>{userProfile?.username}</Text>
+        <Text style={styles.username}>@{userProfile?.username}</Text>
+        <Text style={styles.bio}>{userProfile?.bio || 'No bio available.'}</Text>
+        <View style={styles.stats}>
+          <Text><Text style={styles.bold}>{userProfile?.total_posts_count || 0}</Text> Posts</Text>
+          <Text><Text style={styles.bold}>{userProfile?.followers_count || 0}</Text> Followers</Text>
+          <Text><Text style={styles.bold}>{userProfile?.following_count || 0}</Text> Following</Text>
+        </View>
+      </View>
+
+      {/* Tabs */}
+      <View style={styles.tabs}>
+        {tabs.map(tab => (
+          <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)}>
+            <Text style={[styles.tabText, activeTab === tab && styles.activeTab]}>{tab}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-      >
-        {/* Cover */}
-        <View style={styles.coverContainer}>
-          <Image
-            source={{ uri: 'https://backend.artdomainx.com/media/profiles/canvas_picture/Screenshot_2025-04-19_164918.png' }}
-            style={styles.coverImage}
-          />
-          <TouchableOpacity style={styles.backBtn}>
-            <Ionicons name="arrow-back" size={24} color="white" />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.menuBtn}>
-            <Ionicons name="menu" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-
-        {/* Profile Info */}
-        <View style={styles.profileContainer}>
-        <View style={styles.avatarWrapper}>
-          <Image
-            source={{ uri: 'https://i.pravatar.cc/100?img=1' }}
-            style={styles.avatar}
-          />
-          <TouchableOpacity style={styles.editPhotoBtn} onPress={() => console.log('Edit photo')}>
-            <MaterialCommunityIcons name="plus-circle" size={24} color="#007bff" />
-          </TouchableOpacity>
-        </View>
-
-        <TouchableOpacity style={styles.followBtn}>
-          <Text style={styles.followText}>Follow</Text>
-          <MaterialCommunityIcons name="chevron-down" size={16} color="#fff" />
-        </TouchableOpacity>
-      </View>
-
-
-        <View style={styles.bioContainer}>
-          <Text style={styles.name}>Selena Gomez</Text>
-          <Text style={styles.username}>@salesgomerz</Text>
-          <Text style={styles.bio}>
-            #fetish out Now {'\n'}
-            <Text style={{ color: '#3b82f6' }}>Smartual.it/fetishSG</Text>
-          </Text>
-
-          <View style={styles.stats}>
-            <Text><Text style={styles.bold}>1,222</Text> Posts</Text>
-            <Text><Text style={styles.bold}>125M</Text> Followers</Text>
-            <Text><Text style={styles.bold}>273</Text> Following</Text>
-          </View>
-        </View>
-
-        {/* Recommendations */}
-        <ScrollView horizontal style={styles.recommendRow} showsHorizontalScrollIndicator={false}>
-          <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=4' }} />
-          <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=5' }} />
-          <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=6' }} />
-          <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=7' }} />
-          <Image style={styles.recommendAvatar} source={{ uri: 'https://i.pravatar.cc/100?img=8' }} />
-        </ScrollView>
-
-        {/* Tabs */}
-        <View style={styles.tabs}>
-          {tabs.map((tab) => (
-            <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)} style={styles.tabItem}>
-              <Text style={[styles.tabText, activeTab === tab && styles.activeTab]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Grid */}
-        <FlatList
-          data={getMediaByTab()}
-          renderItem={renderGridItem}
-          keyExtractor={(item) => item.id.toString()}
-          numColumns={numColumns}
-          style={styles.gridContainer}
-          contentContainerStyle={styles.gridContent}
-        />
-      </ScrollView>
-
-      {/* Bottom Navigation */}
-      <View style={styles.bottomBar}>
-        <TouchableOpacity><Ionicons name="home" size={24} color="#4b5563" /></TouchableOpacity>
-        <TouchableOpacity><Ionicons name="search" size={24} color="#4b5563" /></TouchableOpacity>
-        <TouchableOpacity><Ionicons name="notifications" size={24} color="#4b5563" /></TouchableOpacity>
-        <TouchableOpacity style={styles.userBtn}>
-          <Text style={styles.userBtnText}>User Profile</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Image Modal */}
-      <Modal
-        animationType="fade"
-        transparent={true}
-        visible={modalVisible}
-        onRequestClose={() => {
-          setModalVisible(!modalVisible);
-        }}
-      >
+      <FlatList
+        data={getMediaByTab()}
+        renderItem={renderGridItem}
+        keyExtractor={(item) => item.id.toString()}
+        numColumns={numColumns}
+        contentContainerStyle={styles.gridContent}
+        ListHeaderComponent={ListHeader}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      />
+      {/* Modal Image */}
+      <Modal transparent visible={modalVisible} onRequestClose={() => setModalVisible(false)}>
         <View style={styles.centeredView}>
-          <Image source={{ uri: selectedImage }} style={styles.fullScreenImage} resizeMode="contain" />
-          <TouchableOpacity
-            style={styles.closeButton}
-            onPress={() => setModalVisible(!modalVisible)}
-          >
+          <Image source={{ uri: selectedImage || 'https://placehold.co/600x400' }} style={styles.fullScreenImage} resizeMode="contain" />
+          <TouchableOpacity style={styles.closeButton} onPress={() => setModalVisible(false)}>
             <Ionicons name="close-circle" size={40} color="white" />
           </TouchableOpacity>
         </View>
@@ -203,142 +318,40 @@ const ProfileScreen = () => {
 };
 
 export default ProfileScreen;
+
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content: { flex: 1 },
-
-  coverContainer: { height: 160, backgroundColor: '#ccc' },
+  center: { justifyContent: 'center', alignItems: 'center' },
+  errorText: { color: 'red', fontSize: 16 },
+  coverContainer: { height: 160 },
   coverImage: { width: '100%', height: '100%', borderBottomLeftRadius: 20, borderBottomRightRadius: 20 },
-  backBtn: { position: 'absolute', top: 16, left: 16 },
-  menuBtn: { position: 'absolute', top: 16, right: 16 },
-
-  profileContainer: {
-    marginTop: -40,
-    paddingHorizontal: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  backBtn: { position: 'absolute', top: 40, left: 16, zIndex: 1 },
+  menuBtn: { position: 'absolute', top: 40, right: 16, zIndex: 1 },
+  profileContainer: { marginTop: -40, paddingHorizontal: 16, flexDirection: 'row', justifyContent: 'space-between' },
+  avatarWrapper: { position: 'relative', marginRight: 16 },
   avatar: { width: 72, height: 72, borderRadius: 36, borderWidth: 3, borderColor: '#fff' },
-  followBtn: {
-    marginLeft: 'auto',
-    backgroundColor: '#4f46e5',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
+  editPhotoBtn: { position: 'absolute', bottom: 0, right: 0, backgroundColor: '#fff', borderRadius: 50, padding: 2 },
+  buttonRow: { flexDirection: 'row', alignItems: 'center', marginTop: 20 },
+  followBtn: { backgroundColor: '#4f46e5', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, flexDirection: 'row', alignItems: 'center' },
   followText: { color: '#fff', fontWeight: '600', marginRight: 4 },
-
-  bioContainer: { paddingHorizontal: 16, marginTop: 12 },
+  addFriendBtn: { backgroundColor: '#e5e7eb', paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, marginLeft: 10, flexDirection: 'row', alignItems: 'center' },
+  addFriendText: { color: '#374151', fontWeight: '600' },
+  editProfileBtn: { backgroundColor: '#e5e7eb', padding: 6, borderRadius: 20, flexDirection: 'row', alignItems: 'center' },
+  editProfileText: { color: '#374151', fontWeight: '600', marginRight: 5 },
+  bioContainer: { paddingHorizontal: 16, marginTop: 15 },
   name: { fontSize: 18, fontWeight: '700', color: '#111' },
   username: { color: '#6b7280', marginTop: 2 },
   bio: { marginTop: 6, fontSize: 13, lineHeight: 18 },
-
-  stats: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 12,
-    paddingRight: 30,
-  },
+  stats: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12, paddingRight: 30 },
   bold: { fontWeight: '700' },
-
-  recommendRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    marginVertical: 14,
-  },
-  recommendAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 12,
-    borderWidth: 2,
-    borderColor: '#f472b6',
-  },
-
-  tabs: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  tabItem: {},
+  tabs: { flexDirection: 'row', justifyContent: 'space-around', paddingVertical: 10, borderBottomWidth: 1, borderColor: '#e5e7eb' },
   tabText: { fontSize: 14, color: '#6b7280' },
-  activeTab: {
-    color: '#4f46e5',
-    fontWeight: '600',
-    textDecorationLine: 'underline',
-  },
-
-  gridContainer: {
-    padding: gridItemMargin,
-  },
-  gridContent: {
-    justifyContent: 'space-between',
-  },
-  gridItemContainer: {
-    width: gridItemSize,
-    height: gridItemSize,
-    marginBottom: gridItemMargin,
-    borderRadius: 10,
-    overflow: 'hidden',
-    marginLeft: gridItemMargin,
-  },
-  gridItem: {
-    width: '100%',
-    height: '100%',
-  },
-
-  bottomBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-around',
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderColor: '#e5e7eb',
-    backgroundColor: '#fff',
-  },
-  userBtn: {
-    backgroundColor: '#7c3aed',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-  },
-  userBtnText: {
-    color: '#fff',
-    fontWeight: '700',
-    fontSize: 13,
-  },
-
-  // Modal styles
-  centeredView: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.9)',
-  },
-  fullScreenImage: {
-    width: '95%',
-    height: '95%',
-  },
-  closeButton: {
-    position: 'absolute',
-    top: 50,
-    right: 20,
-  },
-  avatarWrapper: {
-  position: 'relative',
-},
-
-editPhotoBtn: {
-  position: 'absolute',
-  bottom: 0,
-  right: 0,
-  backgroundColor: '#fff',
-  borderRadius: 50,
-  padding: 2,
-},
-
+  activeTab: { color: '#4f46e5', fontWeight: '600', textDecorationLine: 'underline' },
+  gridContent: { padding: gridItemMargin },
+  gridItemContainer: { width: gridItemSize, height: gridItemSize, margin: gridItemMargin, borderRadius: 10, overflow: 'hidden' },
+  gridItem: { width: '100%', height: '100%' },
+  pinnedIcon: { position: 'absolute', top: 5, right: 5, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 10, padding: 3 },
+  centeredView: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.9)' },
+  fullScreenImage: { width: '95%', height: '95%' },
+  closeButton: { position: 'absolute', top: 50, right: 20 }
 });

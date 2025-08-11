@@ -213,7 +213,7 @@ export default function SignScreen() {
                     setIsSignIn(true);
                     setOtpSent(false);
                   }}
-                >
+                activeOpacity={0.6}>
                   <Text style={[styles.tabText, isSignIn && styles.activeTabText]}>Sign In</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -222,7 +222,7 @@ export default function SignScreen() {
                     setIsSignIn(false);
                     setOtpSent(false);
                   }}
-                >
+                activeOpacity={0.6}>
                   <Text style={[styles.tabText, !isSignIn && styles.activeTabText]}>Sign Up</Text>
                 </TouchableOpacity>
               </View>
@@ -299,7 +299,7 @@ export default function SignScreen() {
                 )}
 
                 {otpSent && (
-                  <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp} disabled={loading}>
+                  <TouchableOpacity style={styles.resendButton} onPress={handleResendOtp} disabled={loading} activeOpacity={0.6}>
                     <Text style={[styles.resendText, loading && { opacity: 0.6 }]}>
                       {loading ? 'Sending...' : 'Resend OTP'}
                     </Text>
@@ -317,7 +317,7 @@ export default function SignScreen() {
                         ? handleLogin       // 👉 Call login on Sign In
                         : handleAuthPress   // 👉 Call signup (send OTP) on Sign Up
                 }
-              >
+              activeOpacity={0.6}>
                 <Text style={styles.primaryButtonText}>
                   {loading ? (
                 <ActivityIndicator color="#111" size="small" />

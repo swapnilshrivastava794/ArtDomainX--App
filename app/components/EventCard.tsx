@@ -142,7 +142,7 @@ const EventCard = () => {
               <TouchableOpacity
                 style={styles.closeIcon}
                 onPress={() => setSelectedEvent(null)}
-              >
+              activeOpacity={0.6}>
                 <MaterialCommunityIcons name="close" size={22} color="#6b7280" />
               </TouchableOpacity>
 
@@ -153,7 +153,7 @@ const EventCard = () => {
                 <Text style={styles.modalDetails}>{selectedEvent.details}</Text>
               </ScrollView>
 
-              <TouchableOpacity style={styles.ctaBtn} onPress={handleAdd}>
+              <TouchableOpacity style={styles.ctaBtn} onPress={handleAdd} activeOpacity={0.6}>
                 <Text style={styles.ctaText}>Add to Calendar</Text>
               </TouchableOpacity>
 
