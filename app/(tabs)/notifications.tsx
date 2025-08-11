@@ -87,10 +87,15 @@ const Notifications = () => {
     fetchNotifications(); 
   }, [fetchNotifications]);
 
-  const filteredNotifications =
-    selectedFilter === 'all'
-      ? notifications
-      : notifications.filter((n) => n.notification_type?.toLowerCase() === selectedFilter.toLowerCase());
+const filteredNotifications =
+  selectedFilter === 'all'
+    ? notifications
+    : notifications.filter((n) => {
+        const type = n.notification_type?.toLowerCase().replace(/_/g, ' ').trim();
+        const filter = selectedFilter.toLowerCase().replace(/_/g, ' ').trim();
+        return type === filter;
+      });
+
 
   if (loading) {
     return (

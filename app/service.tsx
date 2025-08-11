@@ -198,4 +198,51 @@ export async function uploadPost(formData) {
     },
   });
 }
+
+export async function uploadCanvasImage(formData) {
+  return axiosInstance.post("profile/canvas/", formData);
+}
+
+export async function fetchCanvasImage(userId) {
+  return axiosInstance.get(`profile/canvas/${userId}/`);
+}
+
+// TO GET PINNED POST OF THE USER  /media/post/userId
+export async function fetchPinnedPost(userId) {
+  return axiosInstance.get(
+    `media/profile-trending-posts/profile-id/${userId}/`,
+  );
+}
+
+export async function deletePost(postId) {
+  return axiosInstance.delete(`media/post/${postId}/`);
+}
+
+// TO PIN A POST /media/post/postid/
+export async function pinPost(postId, isPinned = true) {
+  return axiosInstance.put(`media/post/${postId}/`, { is_pinned: isPinned });
+}
+
+export async function deletePostReaction(postId) {
+  return axiosInstance.delete(`media/post-reactions/${postId}/`);
+}
+
+export const fetchUserProfile = async (userId: string) => {
+  return axiosInstance.get(`profile/profile/${userId}/`);
+};
+
+// You can also add a function for fetching posts, if needed
+export const fetchUserPosts = async (userId: string) => {
+  return axiosInstance.get(`profile/profile/${userId}/posts/`);
+};
+
+export const fetchUserByUsername = async (username: string) => {
+  try {
+    const response = await axiosInstance.get(`profile/profile-detail/${username}/`);
+    return response.data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export default axiosInstance;
