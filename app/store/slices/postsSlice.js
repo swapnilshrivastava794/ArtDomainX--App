@@ -11,7 +11,7 @@ export const fetchPosts = createAsyncThunk(
 
     try {
       const res = await getAllPosts(page);
-      console.log("📦 API Response:", res?.data);
+      // console.log("📦 API Response:", res?.data);
 
       const fetched = res?.data?.data || [];
 

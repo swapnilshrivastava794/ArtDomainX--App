@@ -15,11 +15,12 @@ import { runOnJS } from 'react-native-reanimated';
 import {likePost , getPostById} from '../service'
 import { useDispatch } from 'react-redux';
 import { updatePostReaction } from '../store/slices/postsSlice'; // path adjust karo
+import { useProfileNavigation } from '../utils/profileUtils';
 
 interface PostType {
   id: number;
   imageUrl: string;
-  user: { name: string; avatar: string };
+  user: { id: number; name: string; avatar: string };
   caption: string;
   comments: { user: string; text: string }[];
   reactionCount: number;
@@ -44,6 +45,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onAddComment ,  }) => {
   const [liked, setLiked] = useState(!!post.reactionId);
   const heartRef = useRef<Animatable.View | null>(null);
   const dispatch = useDispatch();
+  const { navigateToUserProfile } = useProfileNavigation();
 
 
 // const handleLike = async () => {
@@ -155,7 +157,10 @@ const handleLike = async () => {
           <Image source={{ uri: post.imageUrl }} style={styles.image} />
 
           {/* User Info */}
-          <View style={styles.profileBadge}>
+          <TouchableOpacity 
+            style={styles.profileBadge} 
+            onPress={() => navigateToUserProfile(post.user.id)}
+          >
             <Image source={{ uri: post.user.avatar }} style={styles.avatar} />
             <View style={{ flex: 1 }}>
               <Text style={styles.nameText}>
@@ -164,7 +169,7 @@ const handleLike = async () => {
               <Text style={styles.subText}>Yesterday at 3am</Text>
             </View>
             <MaterialCommunityIcons name="dots-vertical" size={20} color="#fff" />
-          </View>
+          </TouchableOpacity>
 
           {/* Reaction Buttons */}
           <View style={styles.reactionColumn}>
