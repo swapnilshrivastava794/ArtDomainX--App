@@ -16,7 +16,6 @@ import { MaterialCommunityIcons, Ionicons, Feather, AntDesign } from '@expo/vect
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import EditProfile from './EditProfile';
-import { RootState } from '../../store'; // adjust path if needed
 
 
 
@@ -24,11 +23,6 @@ const { width, height } = Dimensions.get('window');
 const numColumns = 2;
 const gridItemMargin = 8;
 const gridItemSize = (width - (numColumns + 1) * gridItemMargin * 2) / numColumns;
-
-  const auth = useSelector((state: RootState) => state.auth);
-    useEffect(() => {
-    console.log('Auth state from Redux:', auth);
-  }, [auth]);
 
   // Debug log when data changes
 
