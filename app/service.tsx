@@ -159,7 +159,7 @@ export async function markNotificationsAsRead(notificationIds: number[]){
 // Profile APIs
 export async function getCurrentUserProfile() {
   try {
-    const response = await axiosInstance.get("/user/profile/");
+    const response = await axiosInstance.get("/profile/profile/");
     return response.data;
   } catch (error) {
     console.error("Error fetching current user profile:", error);
@@ -191,6 +191,32 @@ export async function updateUserProfile(profileData: FormData) {
   }
 }
 
+export async function editUserProfile(profileId: string, profileData: FormData) {
+  try {
+    const response = await axiosInstance.put(
+      `/profile/profile/${profileId}/`,
+      profileData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    // ✅ Save updated profile in AsyncStorage
+    if (response.data) {
+      await AsyncStorage.setItem(
+        "profileData",
+        JSON.stringify(response.data)
+      );
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error("Error editing user profile:", error);
+    throw error;
+  }
+}
 export async function getUserPosts(userId: string | number, page = 1) {
   try {
     const endpoint = `/media/profile-posts/profile-id/${userId}/?page=${page}`;
