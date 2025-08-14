@@ -171,27 +171,34 @@ export default function SignScreen() {
       setLoading(true); // ✅ Start loader
     try {
       const res = await loginUser(loginData);
-      console.log("✅ Login Success:", res.data);
+      const payload = res?.data?.data ?? res?.data ?? res;
+      const { access, refresh, profile_id, profile_type } = payload || {};
 
-      const { access, refresh, profile_id, profile_type } = res.data.data;
+      if (!access) {
+        throw new Error('Login did not return an access token');
+      }
 
       await AsyncStorage.setItem("accessToken", access);
-      await AsyncStorage.setItem("refreshToken", refresh);
+      if (refresh) await AsyncStorage.setItem("refreshToken", refresh);
 
-     
-      dispatch({ type: 'RESET_ALL' }); // 🧹 Clear previous Redux state
       dispatch(setAuth({ access, refresh, profile_id, profile_type }));
-
       
-        await dispatch(fetchProfile(profile_id)).unwrap();
+      if (profile_id) {
+        try {
+          await dispatch(fetchProfile(profile_id)).unwrap();
+        } catch (e) {
+          console.log('fetchProfile failed (non-fatal):', e);
+        }
+      }
 
       setTimeout(() => {
       setLoading(false);
       router.replace('/(tabs)/home');
     }, 300); // 300–500ms is enough for smoother UX
     } catch (err: any) {
-      console.log("❌ Login Error:", err?.response?.data || err);
-      Alert.alert("Login Failed", err?.response?.data?.detail || "Invalid credentials");
+      console.log("❌ Login Error:", err?.data || err?.response?.data || err);
+      const message = err?.data?.detail || err?.response?.data?.detail || err?.message || 'Invalid credentials';
+      Alert.alert("Login Failed", message);
     }
   };
 

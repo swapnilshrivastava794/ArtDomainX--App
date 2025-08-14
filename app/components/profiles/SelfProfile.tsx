@@ -11,11 +11,14 @@ import {
   FlatList,
   Dimensions,
   Modal,
+  Alert,
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons, Feather, AntDesign } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import EditProfile from './EditProfile';
+import { getUserProfile, getCurrentUserProfile } from '../../service';
+import constant from '../../constant';
 
 
 
@@ -46,6 +49,8 @@ const mockUser = {
   is_verified: true,
   is_pro: true,
 };
+
+
 
 // Hardcoded artwork posts (Creative grid)
 const mockArtworks = [
@@ -113,6 +118,7 @@ const SelfProfile = () => {
   const [showBannerOptions, setShowBannerOptions] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
   const [currentUserData, setCurrentUserData] = useState(mockUser);
+  const profileId = useSelector((state: any) => state?.auth?.profile_id);
 
   const tabs = [
     { name: 'Artworks', icon: 'grid', count: currentUserData.artworks_count },
@@ -125,6 +131,54 @@ const SelfProfile = () => {
     // Here you would typically make an API call to save the data
     console.log('Profile updated:', updatedData);
   };
+
+  // Fetch self profile from API using Redux profile_id
+  useEffect(() => {
+    const fetchSelf = async () => {
+      try {
+        console.log('🔎 Fetching profile. profileId =', profileId);
+        let data: any;
+        if (profileId) {
+          // getUserProfile already returns response.data (the profile object)
+          data = await getUserProfile(profileId);
+        } else {
+          // fallback to current user endpoint if id missing
+          const self = await getCurrentUserProfile();
+          data = self;
+        }
+
+        const base = constant.DemoImageURl || '';
+        const resolveUrl = (u?: string | null) => {
+          if (!u) return undefined as unknown as string;
+          return /^https?:\/\//.test(u) ? u : `${base}${u}`;
+        };
+
+        const nextData = {
+          username: data?.username ?? currentUserData.username,
+          name: data?.name ?? data?.username ?? "Please add your name",
+          title: currentUserData.title,
+          bio: data?.bio ?? currentUserData.bio ?? "Please add your bio",
+          // location: currentUserData.location,
+          website: data?.website_url ?? "Please add your website",
+          profile_picture: resolveUrl(data?.profile_picture) ?? currentUserData.profile_picture,
+          banner_image: resolveUrl(data?.cover_picture) ?? currentUserData.banner_image,
+          artworks_count: data?.total_posts_count ,
+          followers_count: data?.followers_count ,
+          following_count: data?.following_count ,
+          likes_count: currentUserData.likes_count ?? 0,
+          is_verified: Boolean(data?.is_verified ?? currentUserData.is_verified),
+          is_pro: Boolean(data?.is_pro ?? currentUserData.is_pro),
+        };
+        setCurrentUserData(nextData as any);
+      } catch (e: any) {
+        console.error('Failed to load self profile', e);
+        // Optional surface to user in dev
+        // Alert.alert('Profile', e?.message || 'Failed to load profile');
+      }
+    };
+    fetchSelf();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [profileId]);
 
   // Render artwork grid item (Unique artistic style)
   const renderArtworkItem = ({ item, index }: { item: any; index: number }) => {

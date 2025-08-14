@@ -39,10 +39,25 @@ axiosInstance.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Handle API errors
+// Handle API errors with proper Error objects (avoid rejecting strings/objects)
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error.response?.data || "Something went wrong"),
+  (error) => {
+    const status = error?.response?.status;
+    const serverData = error?.response?.data;
+    const serverMessage =
+      (typeof serverData === 'string' && serverData) ||
+      serverData?.detail ||
+      serverData?.message ||
+      error?.message ||
+      'Request failed';
+    const wrapped = new Error(serverMessage);
+    // @ts-ignore
+    wrapped.status = status;
+    // @ts-ignore
+    wrapped.data = serverData;
+    return Promise.reject(wrapped);
+  },
 );
 
 // API functions
@@ -68,11 +83,12 @@ export async function RegisterUser(data :any) {
 // 📁 service.ts or service.js
 
 export async function loginUser(formData: any) {
-  return axiosInstance.post("user/login/", formData, {
+  const res = await axiosInstance.post("user/login/", formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
     },
   });
+  return res;
 }
 
 // 📤 Send Forgot Password OTP API

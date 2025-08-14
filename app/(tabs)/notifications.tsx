@@ -16,6 +16,15 @@ import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { useRouter } from 'expo-router';
 import { getUserNotifications, markNotificationsAsRead } from '../service';
 
+interface UserNotification {
+  id: number;
+  sender_profile_picture?: string | null;
+  sender_username?: string | null;
+  message: string;
+  created_at: string | number | Date;
+  notification_type?: string | null;
+}
+
 const FILTERS = [
   'all',
   'like',
@@ -35,7 +44,7 @@ const FILTERS = [
   'mentor eligibility',
 ];
 
-const NotificationItem = ({ item }) => (
+const NotificationItem = ({ item }: { item: UserNotification }) => (
   <View style={styles.notificationCard}>
     <Image
       source={
@@ -56,7 +65,7 @@ const NotificationItem = ({ item }) => (
 const Notifications = () => {
   const router = useRouter();
   const [selectedFilter, setSelectedFilter] = useState('all');
-  const [notifications, setNotifications] = useState([]);
+  const [notifications, setNotifications] = useState<UserNotification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false); 
 
@@ -64,11 +73,11 @@ const Notifications = () => {
   const fetchNotifications = useCallback(async () => {
     try {
       const response = await getUserNotifications();
-      const apiNotifications = response?.data?.notifications || [];
+      const apiNotifications = (response?.data?.notifications || []) as UserNotification[];
       setNotifications(apiNotifications);
 
       if (apiNotifications.length > 0) {
-        const ids = apiNotifications.map((n) => n.id);
+        const ids = apiNotifications.map((n: UserNotification) => n.id);
         await markNotificationsAsRead(ids);
       }
     } catch (error) {
@@ -88,17 +97,17 @@ const Notifications = () => {
     fetchNotifications(); 
   }, [fetchNotifications]);
 
-  const filteredNotifications =
+  const filteredNotifications: UserNotification[] =
     selectedFilter === 'all'
       ? notifications
-      : notifications.filter((n) => n.notification_type?.toLowerCase() === selectedFilter.toLowerCase());
+      : notifications.filter((n: UserNotification) => (n.notification_type || '').toLowerCase() === selectedFilter.toLowerCase());
 
   if (loading) {
     return (
       <SafeAreaView style={styles.safeArea1}>
         <ActivityIndicator
           size="large"
-          color="#1877F2"
+          color="#030dff"
          // style={{ marginTop: verticalScale(100), alignItems: "center", justifyContent: "center" }}
         />
       </SafeAreaView>
@@ -112,7 +121,7 @@ const Notifications = () => {
           <Feather
             name="arrow-left-circle"
             size={24}
-            color="black"
+            color="#030dff"
             style={styles.icon}
           />
         </TouchableOpacity>
@@ -167,7 +176,7 @@ const Notifications = () => {
             <RefreshControl
               refreshing={refreshing}
               onRefresh={onRefresh}
-              tintColor="#1877F2" // Optional: customize the spinner color
+              tintColor="#030dff" // Optional: customize the spinner color
             />
           }
         />
@@ -194,9 +203,9 @@ const styles = StyleSheet.create({
     height: '10%',
     paddingVertical: verticalScale(10),
     paddingHorizontal: scale(16),
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderColor: '#E5E5E5',
+    borderColor: '#E5E7EB',
   },
   icon: {
     marginRight: scale(10),
@@ -210,7 +219,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginLeft: '30%',
     marginTop: verticalScale(20),
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   filterRow: {
     paddingVertical: verticalScale(10),
@@ -220,24 +229,24 @@ const styles = StyleSheet.create({
     gap: scale(10),
   },
   filterButton: {
-    backgroundColor: '#F0F0F0',
+    backgroundColor: '#F3F4F6',
     paddingVertical: verticalScale(6),
     paddingHorizontal: scale(14),
     borderRadius: scale(20),
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#E5E7EB',
     justifyContent: 'center',
     alignItems: 'center',
     height: verticalScale(36),
   },
   activeFilterButton: {
-    backgroundColor: '#1877F2',
-    borderColor: '#1877F2',
+    backgroundColor: '#030dff',
+    borderColor: '#030dff',
   },
   filterText: {
     fontSize: scale(12),
     color: '#333',
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   activeFilterText: {
     color: '#fff',
@@ -265,7 +274,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 1,
-    borderColor: '#EAEAEA',
+    borderColor: '#E5E7EB',
     borderWidth: 1,
   },
   avatar: {
@@ -278,19 +287,19 @@ const styles = StyleSheet.create({
     fontSize: scale(13),
     fontWeight: '600',
     color: '#000',
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   message: {
     fontSize: scale(12),
     color: '#333',
     marginTop: verticalScale(2),
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   time: {
     fontSize: scale(10),
     color: '#888',
     marginTop: verticalScale(4),
-    fontStyle: 'italic',
+    // fontStyle: 'italic',
   },
   noNotificationsContainer: {
     flex: 1,

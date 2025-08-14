@@ -2,7 +2,7 @@
 import { View, TouchableOpacity, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRouter, usePathname } from 'expo-router';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function BottomTabs() {
   const router = useRouter();
@@ -34,9 +34,6 @@ export default function BottomTabs() {
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.push('/notifications')}>
         <Ionicons name="notifications" size={24} color={isActive('/notifications') ? 'blue' : 'gray'} />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => router.push('/explore')}>
-        <MaterialIcons name="message" size={24} color={isActive('/explore') ? 'blue' : 'gray'} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.push('/profile')}>
         <Ionicons name="person" size={24} color={isActive('/profile') ? 'blue' : 'gray'} />
