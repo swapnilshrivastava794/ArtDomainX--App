@@ -1,6 +1,6 @@
 import { Stack, Tabs } from 'expo-router';
 import { View } from 'react-native';
-import BottomTabs from '../components/BottomTabs';
+import BottomTabs from '@components/BottomTabs';
 
 export default function TabsLayout() {
   return (

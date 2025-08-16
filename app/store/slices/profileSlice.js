@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
-import { profileDetail } from "../../service"; // your API function
+import { profileDetail } from "@app/service"; // your API function
 
 // Async thunk to fetch profile by id
 export const fetchProfile = createAsyncThunk(

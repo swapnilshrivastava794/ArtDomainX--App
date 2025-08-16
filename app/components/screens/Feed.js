@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { useSelector, useDispatch } from 'react-redux';
 import PostCard from '../PostCard';
-import { fetchPosts, addComment } from '../../store/slices/postsSlice';
+import { fetchPosts, addComment } from '@store/slices/postsSlice';
 
-const Feed = () => {
+const Feed = ({ shouldRefresh }) => {
   const dispatch = useDispatch();
   const { items: posts, page, hasMore, loading, loadedOnce } = useSelector(state => state.posts);
 
@@ -13,6 +13,12 @@ const Feed = () => {
       dispatch(fetchPosts(1));
     }
   }, []);
+
+  useEffect(() => {
+    if (shouldRefresh) {
+      dispatch(fetchPosts(1));
+    }
+  }, [shouldRefresh]);
 
   const handleAddComment = (postId, commentText) => {
     dispatch(addComment({ postId, commentText }));

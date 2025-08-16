@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Provider, useSelector } from 'react-redux';
-import { store } from './store'; // make sure this path is correct
+import { store } from '@store';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';

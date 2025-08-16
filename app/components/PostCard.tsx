@@ -8,14 +8,14 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import CommentsModal from './screens/CommentScreen';
+import CommentsModal from '@components/screens/CommentScreen';
 import * as Animatable from 'react-native-animatable';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import { runOnJS } from 'react-native-reanimated';
-import {likePost , getPostById} from '../service'
+import {likePost , getPostById} from '@app/service'
 import { useDispatch } from 'react-redux';
-import { updatePostReaction } from '../store/slices/postsSlice'; // path adjust karo
-import { useProfileNavigation } from '../utils/profileUtils';
+import { updatePostReaction } from '@store/slices/postsSlice';
+import { useProfileNavigation } from '@utils/profileUtils';
 
 interface PostType {
   id: number;
@@ -97,7 +97,10 @@ const handleLike = async () => {
     }));
 
     setLiked(prev => !prev); // Toggle heart UI
-    heartRef.current?.bounceIn();
+    const ref: any = heartRef.current;
+    if (ref && typeof ref.bounceIn === 'function') {
+      ref.bounceIn();
+    }
 
     console.log("▶ Liking post:", post.id);
 
@@ -128,8 +131,9 @@ const handleLike = async () => {
       userReactionType,
     }));
 
-  } catch (error) {
-    console.error('❌ Error during like:', error?.response?.data || error.message || error);
+  } catch (error: unknown) {
+    const anyErr = error as any;
+    console.error('❌ Error during like:', anyErr?.response?.data || anyErr?.message || anyErr);
   }
 };
 
@@ -239,9 +243,7 @@ const handleLike = async () => {
         <CommentsModal
           visible={showComments}
           onClose={() => setShowComments(false)}
-          onAddComment={handleAddComment}
-          comments={post.comments}
-          postId={post.id} // ✅ Added post ID
+          postId={post.id}
         />
       </View>
     </GestureDetector>

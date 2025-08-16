@@ -1,5 +1,5 @@
 import React from 'react';
-import SelfProfile from '../components/profiles/SelfProfile';
+import SelfProfile from '@components/profiles/SelfProfile';
 
 const ProfileScreen = () => {
   return <SelfProfile />;

@@ -13,7 +13,7 @@ import { Ionicons, Entypo, Feather } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { useNavigation } from '@react-navigation/native'; // Only if you handle navigation
-import { logout } from "../store/slices/authSlice"; // your logout action
+import { logout } from "@store/slices/authSlice";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useDispatch } from 'react-redux';
 

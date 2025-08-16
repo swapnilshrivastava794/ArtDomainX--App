@@ -17,8 +17,8 @@ import { MaterialCommunityIcons, Ionicons, Feather, AntDesign } from '@expo/vect
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import EditProfile from './EditProfile';
-import { getUserProfile, getCurrentUserProfile } from '../../service';
-import constant from '../../constant';
+import { getUserProfile, getCurrentUserProfile } from '@app/service';
+import constant from '@app/constant';
 
 
 

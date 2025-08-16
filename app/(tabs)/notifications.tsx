@@ -14,7 +14,7 @@ import {
 import Feather from '@expo/vector-icons/Feather';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { useRouter } from 'expo-router';
-import { getUserNotifications, markNotificationsAsRead } from '../service';
+import { getUserNotifications, markNotificationsAsRead } from '@app/service';
 
 interface UserNotification {
   id: number;

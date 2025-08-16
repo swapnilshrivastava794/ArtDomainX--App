@@ -3,8 +3,8 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useDispatch } from 'react-redux';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loginUser } from '../service';
-import { setAuth } from '../store/slices/authSlice';
+import { loginUser } from '@app/service';
+import { setAuth } from '@store/slices/authSlice';
 
 export default function SignInScreen() {
   const [username, setUsername] = useState('');

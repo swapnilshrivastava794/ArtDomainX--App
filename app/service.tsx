@@ -1,5 +1,5 @@
 import axios from "axios";
-import constant from "./constant";
+import constant from "@app/constant";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 

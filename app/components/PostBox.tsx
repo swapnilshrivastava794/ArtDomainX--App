@@ -10,7 +10,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 
-const PostBox = () => {
+const PostBox = ({ shouldRefresh }: { shouldRefresh?: boolean }) => {
   const [post, setPost] = useState('');
   const [media, setMedia] = useState<ImagePicker.ImagePickerAsset | null>(null);
 

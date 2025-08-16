@@ -23,8 +23,8 @@ import {
   getUserPosts, 
   followUser, 
   unfollowUser 
-} from '../../service';
-import constant from '../../constant';
+} from '@app/service';
+import constant from '@app/constant';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 
 const { width } = Dimensions.get('window');

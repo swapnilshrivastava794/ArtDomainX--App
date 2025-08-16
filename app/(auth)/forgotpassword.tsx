@@ -14,7 +14,7 @@ import {
   // SafeAreaView ko import kiya gaya hai
   SafeAreaView,
 } from 'react-native';
-import { sendForgotOtp } from '../service';
+import { sendForgotOtp } from '@app/service';
 import { useRouter } from 'expo-router';
 import { scale, verticalScale, moderateScale } from 'react-native-size-matters';
 import { ActivityIndicator } from 'react-native';

@@ -1,6 +1,6 @@
 // store/postsSlice.js
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { getAllPosts } from '../../service';
+import { getAllPosts } from '@app/service';
 
 const BASE_URL = "https://backend.artdomainx.com/media/";
 

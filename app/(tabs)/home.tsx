@@ -1,10 +1,10 @@
 import React, { useCallback, useState } from 'react';
 import { FlatList, StyleSheet, View ,RefreshControl } from 'react-native';
-import Header from '../components/Header';
-import PostBox from '../components/PostBox';
-import Feed from '../components/screens/Feed';
-import EventCard from '../components/EventCard';
-import AdCard from '../components/AdCard';
+import Header from '@components/Header';
+import PostBox from '@components/PostBox';
+import Feed from '@components/screens/Feed';
+import EventCard from '@components/EventCard';
+import AdCard from '@components/AdCard';
 
 export default function HomeScreen() {
     const [refreshing, setRefreshing] = useState(false);
