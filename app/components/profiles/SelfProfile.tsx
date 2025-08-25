@@ -12,103 +12,39 @@ import {
   Dimensions,
   Modal,
   Alert,
+  RefreshControl,
+  ActivityIndicator
 } from 'react-native';
 import { MaterialCommunityIcons, Ionicons, Feather, AntDesign } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import EditProfile from './EditProfile';
-import { getUserProfile, getCurrentUserProfile } from '@app/service';
+import { getUserProfile, getUserPosts } from '@app/service';
 import constant from '@app/constant';
-
-
+import { RootState } from '@/app/store';
 
 const { width, height } = Dimensions.get('window');
 const numColumns = 2;
 const gridItemMargin = 8;
 const gridItemSize = (width - (numColumns + 1) * gridItemMargin * 2) / numColumns;
 
-  // Debug log when data changes
-
-
-
-
-// Hardcoded profile data (Blue theme)
-const mockUser = {
-  username: 'artcreatrix',
-  name: 'Elena Martinez',
-  title: 'Digital Artist & Creator',
-  bio: '✨ Creating magic through pixels\n🎨 Abstract & Contemporary Art\n🌟 Inspiring creativity worldwide',
-  location: 'San Francisco, CA',
-  website: 'elenacreates.com',
+// Default fallback data
+const defaultUser = {
+  username: 'user',
+  name: 'User Name',
+  title: 'Artist & Creator',
+  bio: 'Welcome to my profile!',
+  location: 'Location',
+  website: 'website.com',
   profile_picture: 'https://i.pravatar.cc/200?img=1',
   banner_image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=800&h=300&fit=crop',
-  artworks_count: 247,
-  followers_count: 15280,
-  following_count: 892,
-  likes_count: 52400,
-  is_verified: true,
-  is_pro: true,
+  artworks_count: 0,
+  followers_count: 0,
+  following_count: 0,
+  likes_count: 0,
+  is_verified: false,
+  is_pro: false,
 };
-
-
-
-// Hardcoded artwork posts (Creative grid)
-const mockArtworks = [
-  {
-    id: 1,
-    title: 'Sunset Dreams',
-    image: 'https://images.unsplash.com/photo-1541961017774-22349e4a1262?w=400&h=500&fit=crop',
-    likes: 1245,
-    views: 8900,
-    price: '$250',
-    category: 'Abstract',
-  },
-  {
-    id: 2,
-    title: 'Ocean Waves',
-    image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=400&fit=crop',
-    likes: 890,
-    views: 5600,
-    price: '$180',
-    category: 'Nature',
-  },
-  {
-    id: 3,
-    title: 'Urban Jungle',
-    image: 'https://images.unsplash.com/photo-1557804506-669a67965ba0?w=400&h=600&fit=crop',
-    likes: 2100,
-    views: 12300,
-    price: '$320',
-    category: 'Digital',
-  },
-  {
-    id: 4,
-    title: 'Mystic Forest',
-    image: 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=400&fit=crop',
-    likes: 756,
-    views: 4200,
-    price: '$200',
-    category: 'Nature',
-  },
-  {
-    id: 5,
-    title: 'Neon Nights',
-    image: 'https://images.unsplash.com/photo-1506094735847-af3b4ba04ad0?w=400&h=500&fit=crop',
-    likes: 1523,
-    views: 9800,
-    price: '$280',
-    category: 'Digital',
-  },
-  {
-    id: 6,
-    title: 'Golden Hour',
-    image: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=400&h=400&fit=crop',
-    likes: 987,
-    views: 6700,
-    price: '$220',
-    category: 'Abstract',
-  },
-];
 
 const SelfProfile = () => {
   const router = useRouter();
@@ -117,72 +53,123 @@ const SelfProfile = () => {
   const [selectedArtwork, setSelectedArtwork] = useState<any>(null);
   const [showBannerOptions, setShowBannerOptions] = useState(false);
   const [showEditProfile, setShowEditProfile] = useState(false);
-  const [currentUserData, setCurrentUserData] = useState(mockUser);
-  const profileId = useSelector((state: any) => state?.auth?.profile_id);
+  const [currentUserData, setCurrentUserData] = useState(defaultUser);
+  const [userPosts, setUserPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const profileId = useSelector((state: RootState) => state?.auth?.profile_id);
 
   const tabs = [
-    { name: 'Artworks', icon: 'grid', count: currentUserData.artworks_count },
-    { name: 'Collections', icon: 'folder', count: 12 },
-    { name: 'Liked', icon: 'heart', count: 156 },
+    { name: 'Artworks', icon: 'grid', count: currentUserData.artworks_count || 0 },
+    { name: 'Collections', icon: 'folder', count: 0 },
+    { name: 'Liked', icon: 'heart', count: 0 },
   ];
 
   const handleSaveProfile = (updatedData: any) => {
     setCurrentUserData(prev => ({ ...prev, ...updatedData }));
-    // Here you would typically make an API call to save the data
     console.log('Profile updated:', updatedData);
   };
 
-  // Fetch self profile from API using Redux profile_id
+  // Helper function to resolve image URLs
+  const resolveImageUrl = (url?: string | null) => {
+    if (!url) return defaultUser.profile_picture;
+    if (/^https?:\/\//.test(url)) return url;
+    return `${constant.DemoImageURl}${url}`;
+  };
+
+  // Fetch current user profile
+  // const fetchUserProfile = async () => {
+  //   try {
+  //     setError(null);
+  //     const data = await getCurrentUserProfile();
+  //     console.log('Profile data:', data);
+
+  //     const profileData = {
+  //       username: data?.username || defaultUser.username,
+  //       name: data?.name || data?.username || defaultUser.name,
+  //       title: data?.title || defaultUser.title,
+  //       bio: data?.bio || defaultUser.bio,
+  //       location: data?.location || defaultUser.location,
+  //       website: data?.website_url || defaultUser.website,
+  //       profile_picture: resolveImageUrl(data?.profile_picture),
+  //       banner_image: resolveImageUrl(data?.cover_picture) || defaultUser.banner_image,
+  //       artworks_count: data?.total_posts_count || 0,
+  //       followers_count: data?.followers_count || 0,
+  //       following_count: data?.following_count || 0,
+  //       likes_count: data?.likes_count || 0,
+  //       is_verified: Boolean(data?.is_verified),
+  //       is_pro: Boolean(data?.is_pro),
+  //     };
+      
+  //     setCurrentUserData(profileData);
+  //   } catch (error: any) {
+  //     console.error('Failed to load profile:', error);
+  //     setError(error?.message || 'Failed to load profile');
+  //   }
+  // };
+
+  // Fetch user posts
+  const fetchUserPosts = async () => {
+    if (!profileId) return;
+    
+    try {
+      setPostsLoading(true);
+      const response = await getUserPosts(profileId);
+      console.log('User posts:', response);
+      
+      const posts = response?.results || [];
+      const formattedPosts = posts.map((post: any, index: number) => ({
+        id: post.id || index,
+        title: post.title || 'Untitled',
+        image: resolveImageUrl(post.image || post.media_files?.[0]?.file),
+        likes: post.likes_count || 0,
+        views: post.views_count || 0,
+        price: post.price ? `$${post.price}` : 'N/A',
+        category: post.category || 'Art',
+        description: post.description || '',
+      }));
+      
+      setUserPosts(formattedPosts);
+    } catch (error: any) {
+      console.error('Failed to load posts:', error);
+      setUserPosts([]);
+    } finally {
+      setPostsLoading(false);
+    }
+  };
+
+  // Initial data fetch
   useEffect(() => {
-    const fetchSelf = async () => {
-      try {
-        console.log('🔎 Fetching profile. profileId =', profileId);
-        let data: any;
-        if (profileId) {
-          // getUserProfile already returns response.data (the profile object)
-          data = await getUserProfile(profileId);
-        } else {
-          // fallback to current user endpoint if id missing
-          const self = await getCurrentUserProfile();
-          data = self;
-        }
-
-        const base = constant.DemoImageURl || '';
-        const resolveUrl = (u?: string | null) => {
-          if (!u) return undefined as unknown as string;
-          return /^https?:\/\//.test(u) ? u : `${base}${u}`;
-        };
-
-        const nextData = {
-          username: data?.username ?? currentUserData.username,
-          name: data?.name ?? data?.username ?? "Please add your name",
-          title: currentUserData.title,
-          bio: data?.bio ?? currentUserData.bio ?? "Please add your bio",
-          // location: currentUserData.location,
-          website: data?.website_url ?? "Please add your website",
-          profile_picture: resolveUrl(data?.profile_picture) ?? currentUserData.profile_picture,
-          banner_image: resolveUrl(data?.cover_picture) ?? currentUserData.banner_image,
-          artworks_count: data?.total_posts_count ,
-          followers_count: data?.followers_count ,
-          following_count: data?.following_count ,
-          likes_count: currentUserData.likes_count ?? 0,
-          is_verified: Boolean(data?.is_verified ?? currentUserData.is_verified),
-          is_pro: Boolean(data?.is_pro ?? currentUserData.is_pro),
-        };
-        setCurrentUserData(nextData as any);
-      } catch (e: any) {
-        console.error('Failed to load self profile', e);
-        // Optional surface to user in dev
-        // Alert.alert('Profile', e?.message || 'Failed to load profile');
-      }
+    const loadData = async () => {
+      setLoading(true);
+      await Promise.all([
+        // fetchUserProfile(),
+        fetchUserPosts()
+      ]);
+      setLoading(false);
     };
-    fetchSelf();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
+    if (profileId) {
+      loadData();
+    }
   }, [profileId]);
 
-  // Render artwork grid item (Unique artistic style)
+  // Pull to refresh
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      // fetchUserProfile(),
+      fetchUserPosts()
+    ]);
+    setRefreshing(false);
+  };
+
+  // Render artwork grid item
   const renderArtworkItem = ({ item, index }: { item: any; index: number }) => {
-    const isLarge = index % 3 === 0; // Every 3rd item is larger
+    const isLarge = index % 3 === 0;
     return (
       <TouchableOpacity
         style={[
@@ -196,7 +183,8 @@ const SelfProfile = () => {
       >
         <Image 
           source={{ uri: item.image }} 
-          style={styles.artworkImage} 
+          style={styles.artworkImage}
+          defaultSource={{ uri: defaultUser.profile_picture }}
         />
         <LinearGradient
           colors={['transparent', 'rgba(0,0,0,0.8)']}
@@ -224,14 +212,59 @@ const SelfProfile = () => {
     );
   };
 
+  // Loading state
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#030dff" />
+          <Text style={styles.loadingText}>Loading profile...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Error state
+  if (error && !currentUserData.username) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.errorContainer}>
+          <Feather name="alert-circle" size={48} color="#ff4757" />
+          <Text style={styles.errorTitle}>Failed to Load Profile</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity 
+            style={styles.retryButton}
+            onPress={() => {
+              setLoading(true);
+              // fetchUserProfile().finally(() => setLoading(false));
+            }}
+          >
+            <Text style={styles.retryButtonText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#030dff']}
+          />
+        }
+      >
         {/* Header with Banner */}
         <View style={styles.bannerContainer}>
           <Image
             source={{ uri: currentUserData.banner_image }}
             style={styles.bannerImage}
+            defaultSource={{ uri: defaultUser.banner_image }}
           />
           <LinearGradient
             colors={['transparent', 'rgba(0,0,0,0.6)']}
@@ -268,6 +301,7 @@ const SelfProfile = () => {
               <Image
                 source={{ uri: currentUserData.profile_picture }}
                 style={styles.avatar}
+                defaultSource={{ uri: defaultUser.profile_picture }}
               />
               {currentUserData.is_pro && (
                 <LinearGradient
@@ -303,15 +337,19 @@ const SelfProfile = () => {
             <Text style={styles.title}>{currentUserData.title}</Text>
             <Text style={styles.bio}>{currentUserData.bio}</Text>
             
-            <View style={styles.locationRow}>
-              <Feather name="map-pin" size={14} color="#666" />
-              <Text style={styles.location}>{currentUserData.location}</Text>
-            </View>
+            {currentUserData.location && (
+              <View style={styles.locationRow}>
+                <Feather name="map-pin" size={14} color="#666" />
+                <Text style={styles.location}>{currentUserData.location}</Text>
+              </View>
+            )}
             
-            <TouchableOpacity style={styles.websiteRow}>
-              <Feather name="link" size={14} color="#030dff" />
-              <Text style={styles.website}>{currentUserData.website}</Text>
-            </TouchableOpacity>
+            {currentUserData.website && (
+              <TouchableOpacity style={styles.websiteRow}>
+                <Feather name="link" size={14} color="#030dff" />
+                <Text style={styles.website}>{currentUserData.website}</Text>
+              </TouchableOpacity>
+            )}
           </View>
 
           {/* Stats Grid */}
@@ -406,15 +444,30 @@ const SelfProfile = () => {
         {/* Artworks Grid */}
         {activeTab === 'Artworks' && (
           <View style={styles.artworksContainer}>
-            <FlatList
-              data={mockArtworks}
-              renderItem={renderArtworkItem}
-              keyExtractor={(item) => item.id.toString()}
-              numColumns={numColumns}
-              scrollEnabled={false}
-              contentContainerStyle={styles.artworksGrid}
-              columnWrapperStyle={styles.artworkRow}
-            />
+            {postsLoading ? (
+              <View style={styles.postsLoadingContainer}>
+                <ActivityIndicator size="large" color="#030dff" />
+                <Text style={styles.loadingText}>Loading artworks...</Text>
+              </View>
+            ) : userPosts.length > 0 ? (
+              <FlatList
+                data={userPosts}
+                renderItem={renderArtworkItem}
+                keyExtractor={(item) => item.id.toString()}
+                numColumns={numColumns}
+                scrollEnabled={false}
+                contentContainerStyle={styles.artworksGrid}
+                columnWrapperStyle={styles.artworkRow}
+              />
+            ) : (
+              <View style={styles.emptyContainer}>
+                <View style={styles.emptyIcon}>
+                  <Feather name="image" size={48} color="#ddd" />
+                </View>
+                <Text style={styles.emptyTitle}>No Artworks Yet</Text>
+                <Text style={styles.emptyText}>Start creating and sharing your art!</Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -428,7 +481,7 @@ const SelfProfile = () => {
           </View>
         )}
       </ScrollView>
-      
+
       {/* Enhanced Artwork Viewer Modal */}
       <Modal
         animationType="slide"
@@ -1059,6 +1112,84 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     fontWeight: '500',
+  },
+  
+  // Loading State
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#666',
+    marginTop: 16,
+  },
+  
+  // Error State
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+  },
+  errorText: {
+    fontSize: 14,
+    color: '#999',
+    marginBottom: 16,
+  },
+  retryButton: {
+    backgroundColor: '#030dff',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  retryButtonText: {
+    fontSize: 14,
+    color: 'white',
+    fontWeight: '600',
+  },
+  
+  // Posts Loading
+  postsLoadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  
+  // Empty State
+  emptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+  },
+  emptyIcon: {
+    width: 80,
+    height: 80,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#666',
+    marginBottom: 8,
+  },
+  emptyText: {
+    fontSize: 14,
+    color: '#999',
   },
 });
 

@@ -173,19 +173,19 @@ export async function markNotificationsAsRead(notificationIds: number[]){
 }
 
 // Profile APIs
-export async function getCurrentUserProfile() {
-  try {
-    const response = await axiosInstance.get("/user/profile/");
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching current user profile:", error);
-    throw error;
-  }
-}
+// export async function getCurrentUserProfile() {
+//   try {
+//     const response = await axiosInstance.get("/profile/profile/");
+//     return response.data;
+//   } catch (error) {
+//     console.error("Error fetching current user profile:", error);
+//     throw error;
+//   }
+// }
 
 export async function getUserProfile(userId: string | number) {
   try {
-    const response = await axiosInstance.get(`/user/profile/${userId}/`);
+    const response = await axiosInstance.get(`/profile/profile/${userId}/`);
     return response.data;
   } catch (error) {
     console.error("Error fetching user profile:", error);
@@ -193,19 +193,7 @@ export async function getUserProfile(userId: string | number) {
   }
 }
 
-export async function updateUserProfile(profileData: FormData) {
-  try {
-    const response = await axiosInstance.put("/user/profile/", profileData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Error updating user profile:", error);
-    throw error;
-  }
-}
+
 
 export async function getUserPosts(userId: string | number, page = 1) {
   try {

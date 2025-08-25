@@ -1,7 +1,7 @@
 const constant = {
-  // appBaseUrl: "http://127.0.0.1:8000",
+  appBaseUrl: "http://127.0.0.1:8000",
   // appBaseUrl: "http://192.168.29.247:8001/",
-  appBaseUrl: "https://backend.artdomainx.com",
+  // appBaseUrl: "https://backend.artdomainx.com",
 
   DemoImageURl: "https://backend.artdomainx.com",
 
